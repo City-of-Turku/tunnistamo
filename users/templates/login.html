@@ -11,7 +11,7 @@
     margin-left: -1.25rem;
   }
   #remember-me-section {
-    margin-bottom: 1rem;
+    margin: 1rem 0;
   }
 </style>
 {% endblock %}
@@ -20,16 +20,6 @@
 <p class="doc">
   {% blocktrans %}You may authenticate to this service by using one of the following login methods.{% endblocktrans %}
 </p>
-<div id="remember-me-section">
-  <form id="remember-me-form">
-    <div class="form-check">
-      <input type="checkbox" class="form-check-input" id="remember-me-checkbox" aria-describedby="remember-me-helptext">
-      <label class="form-check-label" for="remember-me-checkbox">{% trans "Remember me on this device" %}</label>
-      <small class="form-text text-muted" id="remember-me-helptext">{% blocktrans %}If you are on a shared computer, you should not check this box.{% endblocktrans %}</small>
-    </div>
-    {% csrf_token %}
-  </form>
-</div>
 
 <div class="login-method-list">
   {% for method in login_methods %}
@@ -63,6 +53,17 @@
       {% endif %}
   </div>
   {% endfor %}
+</div>
+
+<div id="remember-me-section">
+  <form id="remember-me-form">
+    <div class="form-check">
+      <input type="checkbox" class="form-check-input" id="remember-me-checkbox" aria-describedby="remember-me-helptext">
+      <label class="form-check-label" for="remember-me-checkbox">{% trans "Remember me on this device" %}</label>
+      <small class="form-text text-muted" id="remember-me-helptext">{% blocktrans %}If you are on a shared computer, you should not check this box.{% endblocktrans %}</small>
+    </div>
+    {% csrf_token %}
+  </form>
 </div>
 
 <div class="dialog-footer">
