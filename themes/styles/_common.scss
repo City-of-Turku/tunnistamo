@@ -139,6 +139,13 @@
         background-color: darken(#006bb6, 7%);
       }
     }
+    &-opas_adfs {
+      background-color: #adb5bd;
+      color: #000000;
+      &:hover {
+        background-color: darken(#adb5bd, 7%);
+      }
+    }
     &-axiell_aurora {
       background-color: darken(#00c8f2, 30%);
       &:hover {

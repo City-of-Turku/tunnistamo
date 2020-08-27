@@ -39,6 +39,7 @@ class SuomiFiAssociation(object):
 
 class TurkuSuomiFiAuth(LegacyAuth):
     name = 'turku_suomifi'
+    EXTRA_DATA = ['non_disclosure', 'postal_code', 'municipality_name', 'municipality_code']
 
     def api_url(self):
         return self.setting('API_URL')
@@ -62,6 +63,12 @@ class TurkuSuomiFiAuth(LegacyAuth):
         attrs = response['attributes']
         out['first_name'] = attrs.get('firstName', None)
         out['last_name'] = attrs.get('sn', None)
+
+        out['municipality_code'] = attrs.get('KotikuntaKuntanumero', None)
+        out['municipality_name'] = attrs.get('KotikuntaKuntaS', None)
+        out['non_disclosure'] = attrs.get('TurvakieltoTieto', None)
+        out['postal_code'] = attrs.get('VakinainenKotimainenLahiosoitePostinumero', None)
+
         birthdate = attrs.get('nationalIdentificationNumber', '')
         if birthdate:
             m = re.match(r'([0-9]{2})([0-9]{2})([0-9]{2})([A-])', birthdate)
