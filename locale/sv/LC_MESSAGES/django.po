@@ -513,3 +513,8 @@ msgstr "Om du använder en gemensam dator, ska du inte kryssa i denna ruta."
 #: users/templates/login.html
 msgid "Return to the originating service"
 msgstr "Retur till starttjänsten"
+
+
+#: users/models.py
+msgid "Short description is required if login method is disabled."
+msgstr "Kort beskrivning krävs om inloggningsmetoden är inaktiverad."

@@ -7,6 +7,7 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
+from django.core.exceptions import ValidationError
 from helusers.models import AbstractUser
 from ipware import get_client_ip
 from oauth2_provider.models import AbstractApplication
@@ -39,6 +40,11 @@ def get_provider_ids():
 
 
 class LoginMethod(TranslatableModel):
+    disabled = models.BooleanField(
+                default=False, verbose_name=_('disable login method'),
+                help_text=_('Set if this login method should be unselectable')
+            )
+    
     provider_id = models.CharField(
         max_length=50, unique=True,
         choices=sorted(get_provider_ids()))
@@ -60,6 +66,10 @@ class LoginMethod(TranslatableModel):
     class Meta:
         ordering = ('order',)
 
+    
+    def clean(self, *args, **kwargs):
+        if self.disabled and not self.short_description:
+            raise ValidationError(_('Short description is required if login method is disabled.'))
 
 class OptionsBase(models.Model):
     SITE_TYPES = (

@@ -25,32 +25,52 @@
   {% for method in login_methods %}
   <div class="login-method login-method-{{ method.provider_id }}
               {% if method.order == 0 %}login-method__primary{% endif %}">
-      {% if not method.logo_url %}
-      <a href="{{ method.login_url }}"
-         class="btn btn-block btn-social btn-{{ method.provider_id }}">
-          <span class="icon icon-{{ method.provider_id }}" aria-hidden="true">
-            {% svg method.provider_id %}
-          </span>
-          <span class="method-name">
-            {{ method.name }}
-          </span>
+    {% if not method.logo_url %}
+      {% if not method.disabled %}
+      <a href="{{ method.login_url }}" class="btn btn-block btn-social btn-{{ method.provider_id }}">
+        <span class="icon icon-{{ method.provider_id }}" aria-hidden="true">
+          {% svg method.provider_id %}
+        </span>
+        <span class="method-name">
+          {{ method.name }}
+        </span>
       </a>
       {% else %}
-      <a href="{{ method.login_url }}"
-         class="btn btn-block btn-social btn-{{ method.provider_id }}">
-          <span class="ext-icon">
-              <img src="{{ method.logo_url }}" />
-          </span>
-          <span class="method-name">
-            {{ method.name }}
-          </span>
+      <span class="btn btn-block btn-social btn-{{ method.provider_id }} disabled">
+        <span class="icon icon-{{ method.provider_id }}" aria-hidden="true">
+          {% svg method.provider_id %}
+        </span>
+        <span class="method-name">
+          {{ method.name }}
+        </span>
+      </span>
+      {% endif %}
+    {% else %}
+      {% if not method.disabled %}
+      <a href="{{ method.login_url }}" class="btn btn-block btn-social btn-{{ method.provider_id }}">
+        <span class="ext-icon">
+          <img src="{{ method.logo_url }}" />
+        </span>
+        <span class="method-name">
+          {{ method.name }}
+        </span>
       </a>
+      {% else %}
+      <span class="btn btn-block btn-social btn-{{ method.provider_id }} disabled">
+        <span class="ext-icon">
+          <img src="{{ method.logo_url }}" />
+        </span>
+        <span class="method-name">
+          {{ method.name }}
+        </span>
+      </span>
       {% endif %}
-      {% if method.short_description %}
-      <div class="short-description">
+    {% endif %}
+    {% if method.short_description %}
+    <div class="short-description">
       {{ method.short_description|safe }}
-      </div>
-      {% endif %}
+    </div>
+    {% endif %}
   </div>
   {% endfor %}
 </div>

@@ -483,3 +483,8 @@ msgstr "Jos olet yhteiskäyttötietokoneella, älä ruksi tätä."
 #: users/templates/login.html
 msgid "Return to the originating service"
 msgstr "Palaa asiointipalveluun"
+
+
+#: users/models.py
+msgid "Short description is required if login method is disabled."
+msgstr "Lyhyt kuvaus tarvitaan, jos kirjautumistapa on poissa käytöstä."
