@@ -108,6 +108,7 @@ class ReducedStandardScopeClaims(StandardScopeClaims):
             'updated_at': self.userinfo.get('updated_at'),
         }
         self.__insert_student_role_if_applicable(dic)
+        self.__insert_oid(dic)
 
         return dic
 
@@ -132,6 +133,13 @@ class ReducedStandardScopeClaims(StandardScopeClaims):
             attributes[key] = extra_data[key] if key in extra_data else None
         except UserSocialAuth.DoesNotExist:
             pass
+
+    def __insert_oid(self, attributes):
+        try:
+            social_user = UserSocialAuth.objects.get(user=self.user)
+            attributes['oid'] = social_user.uid
+        except UserSocialAuth.DoesNotExist:
+            attributes['oid'] = None
 
 
 class TurkuSuomiFiUserAttributeScopeClaims(ScopeClaims):
