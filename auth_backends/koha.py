@@ -52,7 +52,8 @@ class KohaAuth(LegacyAuth):
 
         try:
             resp = getattr(requests, method)(url, **kwargs)
-            resp.raise_for_status()
+            if resp.status_code != 401:
+                resp.raise_for_status()
         except requests.exceptions.RequestException as err:
             logger.exception('API call to %s failed' % path, exc_info=err)
             raise APIError('API call to %s failed: %s' % (path, str(err)))
@@ -135,7 +136,9 @@ class KohaAuth(LegacyAuth):
             userid=borrower_card_id,
             password=borrower_card_pin)
         )
-        # ->  {'borrowernumber': 357668, 'email': '', 'firstname': 'O', 'permissions': [], 'sessionid': '21c824db91ab83452ebef00a461d747a', 'surname': 'Tiala'}
+        if 'error' in result and result['error'] == 'Login failed.':
+            auditlog.log_authentication_failure(request, self.name, identifier=borrower_card_id)
+            raise AuthenticationFailed('Login returned "Login failed."')
 
         session_id = result['sessionid']
         borrower_number = result['borrowernumber']
