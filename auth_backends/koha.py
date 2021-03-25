@@ -109,7 +109,7 @@ class KohaAuth(LegacyAuth):
         return render(request, self.FORM_HTML, {'form': form, 'login_method_uri': login_method_uri})
 
     def _validate_settings(self):
-        REQUIRED_SETTINGS = ['API_URL', 'API_USERNAME', 'API_PASSWORD']
+        REQUIRED_SETTINGS = ['API_URL']
         for setting_name in REQUIRED_SETTINGS:
             if not self.setting(setting_name):
                 raise ImproperlyConfigured('Required setting %s not found' % setting_name)
