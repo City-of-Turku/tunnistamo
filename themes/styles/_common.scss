@@ -152,6 +152,12 @@
         background-color: darken(#00c8f2, 37%);
       }
     }
+    &-koha {
+      background-color: #377424;
+      &:hover {
+        background-color: darken(#377424, 7%);
+      }
+    }
     &-turku_suomifi {
       background-color: #003479;
       &:hover {
