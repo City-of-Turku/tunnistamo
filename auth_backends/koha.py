@@ -35,6 +35,7 @@ class KohaLoginForm(forms.Form):
         widget=forms.TextInput(attrs={'type': 'password'})
     )
 
+
 class KohaAuth(LegacyAuth):
     name = 'koha'
     ID_KEY = 'borrower_card_id'
