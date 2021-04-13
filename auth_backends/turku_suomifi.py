@@ -63,6 +63,7 @@ class TurkuSuomiFiAuth(LegacyAuth):
         attrs = response['attributes']
         out['first_name'] = attrs.get('firstName', None)
         out['last_name'] = attrs.get('sn', None)
+        out['email'] = attrs.get('mail', None)
 
         out['municipality_code'] = attrs.get('KotikuntaKuntanumero', None)
         out['municipality_name'] = attrs.get('KotikuntaKuntaS', None)
