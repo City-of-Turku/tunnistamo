@@ -147,5 +147,4 @@ class FoliAuth(LegacyAuth):
             raise AuthMissingParameter(self, 'user_info')
 
         kwargs.update({'response': user_info, 'backend': self})
-        print(kwargs)
         return self.strategy.authenticate(*args, **kwargs)
