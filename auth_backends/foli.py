@@ -28,7 +28,7 @@ class AuthenticationFailed(Exception):
 
 class FoliLoginForm(forms.Form):
     id = 'foli_login_form'
-    username = forms.CharField(label=_("Föli username"), max_length=32)
+    username = forms.CharField(label=_("Username"), max_length=32)
     password = forms.CharField(
         label=_("Password"),
         widget=forms.TextInput(attrs={'type': 'password'})

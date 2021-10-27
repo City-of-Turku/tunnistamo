@@ -37,6 +37,18 @@ msgstr "Tunnusluku (PIN)"
 msgid "Invalid card number or PIN"
 msgstr "Väärä kortinnumero tai PIN-koodi"
 
+#: auth_backends/foli.py:31
+msgid "Username"
+msgstr "Käyttäjänimi"
+
+#: auth_backends/foli.py:33
+msgid "Password"
+msgstr "Salasana"
+
+#: auth_backends/foli.py:98
+msgid "Invalid username or password"
+msgstr "Väärä käyttäjätunnus tai salasana"
+
 #: auth_backends/templates/axiell_aurora/login.html
 msgid "Library card login"
 msgstr "Tunnistaudu kirjastokortilla"
@@ -48,6 +60,10 @@ msgstr "Kirjaudu"
 #: auth_backends/templates/axiell_aurora/login.html
 msgid "Return to login method selection"
 msgstr "Palaa tunnistautumismenetelmän valintaan"
+
+#: auth_backends/templates/foli/login.html:5
+msgid "Föli login"
+msgstr "Föli-kirjautuminen"
 
 #: content/models.py
 msgid "site owner name"

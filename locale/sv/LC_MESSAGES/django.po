@@ -38,6 +38,18 @@ msgstr "Kortets PIN-kod"
 msgid "Invalid card number or PIN"
 msgstr "Ogiltigt kortnummer eller PIN-kod"
 
+#: auth_backends/foli.py:31
+msgid "Username"
+msgstr "Användarnamn"
+
+#: auth_backends/foli.py:33
+msgid "Password"
+msgstr "Lösenord"
+
+#: auth_backends/foli.py:98
+msgid "Invalid username or password"
+msgstr "Fel användarnamn eller lösenord"
+
 #: auth_backends/templates/axiell_aurora/login.html
 msgid "Library card login"
 msgstr "Inloggning med bibliotekskort"
@@ -49,6 +61,10 @@ msgstr "Inloggning"
 #: auth_backends/templates/axiell_aurora/login.html
 msgid "Return to login method selection"
 msgstr "Retur till val av inloggning"
+
+#: auth_backends/templates/foli/login.html:5
+msgid "Föli login"
+msgstr "Föli inloggning"
 
 #: content/models.py
 msgid "site owner name"
