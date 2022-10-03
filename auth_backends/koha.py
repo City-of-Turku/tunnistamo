@@ -53,7 +53,7 @@ class KohaAuth(LegacyAuth):
 
         try:
             resp = getattr(requests, method)(url, **kwargs)
-            if resp.status_code != 401:
+            if resp.status_code not in [200, 400]:
                 resp.raise_for_status()
         except requests.exceptions.RequestException as err:
             logger.exception('API call to %s failed' % path, exc_info=err)
@@ -80,10 +80,6 @@ class KohaAuth(LegacyAuth):
 
         out['first_name'] = borrower_info.get('firstname', '').strip()
         out['last_name'] = borrower_info.get('surname', '').strip()
-
-        birthdate = borrower_info.get('dateofbirth')
-        birthdate = datetime.strptime(birthdate, '%Y-%m-%d')
-        out['birthdate'] = birthdate.date()
 
         return out
 
@@ -133,22 +129,15 @@ class KohaAuth(LegacyAuth):
             auditlog.log_authentication_rate_limited(request, self.name, identifier=borrower_card_id)
             raise AccountTemporarilyLocked()
 
-        result = self.api_request('post', '/auth/session', data=dict(
-            userid=borrower_card_id,
-            password=borrower_card_pin)
-        )
-        if 'error' in result and result['error'] == 'Login failed.':
+        result = self.api_request('post', '/contrib/kohasuomi/borrowers/status', files={
+            'uname': (None, borrower_card_id),
+            'passwd': (None, borrower_card_pin),
+        })
+        if 'error' in result and result['error'] == 'Authentication failed for the given username and password.':
             auditlog.log_authentication_failure(request, self.name, identifier=borrower_card_id)
             raise AuthenticationFailed('Login returned "Login failed."')
 
-        session_id = result['sessionid']
-        borrower_number = result['borrowernumber']
-        cookies = dict(
-            CGISESSID=session_id,
-        )
-        url = '/patrons/%s' % borrower_number
-
-        borrower_info = self.api_request('get', url, cookies=cookies)
+        borrower_info = result
 
         auditlog.log_authentication_success(request, self.name, identifier=borrower_card_id)
         # Reset the rate limiting on successful login
