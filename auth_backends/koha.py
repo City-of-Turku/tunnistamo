@@ -129,14 +129,34 @@ class KohaAuth(LegacyAuth):
             auditlog.log_authentication_rate_limited(request, self.name, identifier=borrower_card_id)
             raise AccountTemporarilyLocked()
 
-        result = self.api_request('post', '/contrib/kohasuomi/borrowers/status', files={
-            'uname': (None, borrower_card_id),
-            'passwd': (None, borrower_card_pin),
-        })
-        if 'error' in result and result['error'] == 'Authentication failed for the given username and password.':
+        # Fetch oauth token for sending requests to /auth/patrons/validation endpoint
+        oauth_token = self.api_request('post', '/oauth/token', data=dict(
+            grant_type="client_credentials",
+            client_id=settings.KOHA_OAUTH_CLIENT_ID,
+            client_secret=settings.KOHA_OAUTH_CLIENT_API_KEY,
+            ))
+        
+        # Construct headers with the oauth token
+        headers = {
+            'Authorization': 'Bearer {}'.format(oauth_token['access_token']),
+        }
+        # Construct body for the endpoint call
+        body = {
+            "cardnumber":borrower_card_id,
+            "password": borrower_card_pin
+        }
+        
+        # Fetch the patron information.
+        try:
+            result = self.api_request('post', '/contrib/kohasuomi/auth/patrons/validation', headers=headers, json=body)
+        except:
+            auditlog.log_authentication_failure(request, self.name, identifier=borrower_card_id)
+            raise AuthenticationFailed('Patron validation request failure.')
+
+        if 'error' in result and result['error'] == 'Login failed.':
             auditlog.log_authentication_failure(request, self.name, identifier=borrower_card_id)
             raise AuthenticationFailed('Login returned "Login failed."')
-
+        
         borrower_info = result
 
         auditlog.log_authentication_success(request, self.name, identifier=borrower_card_id)
