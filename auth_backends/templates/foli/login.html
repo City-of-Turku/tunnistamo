@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% load i18n bootstrap4 %}
+
+{% block title %}{% trans "Library card login" %}{% endblock %}
+
+{% block content %}
+<form action="{% url 'social:begin' backend='foli' %}" method='post' class='form'{% if form.id %} id='{{ form.id }}'{% endif %}{% if form.non_field_errors %} aria-errormessage='{{ form.id }}-errors'{% endif %}>
+  {% csrf_token %}
+  {% bootstrap_form form %}
+  {% buttons %}
+    <div style='margin-top: 2rem'>
+      <button type="submit" class="btn btn-primary">{% trans "Login" %}</button>
+    </div>
+  {% endbuttons %}
+</form>
+
+<div role="navigation" class="dialog-footer">
+  <a href="{{ login_method_uri }}"><span aria-hidden="true">⟵ </span>{% trans "Return to login method selection" %}</a>
+</div>
+
+{% endblock %}
