@@ -159,6 +159,7 @@ AUTHENTICATION_BACKENDS = [
     'auth_backends.adfs.opas.OpasADFS',
     'auth_backends.turku_suomifi.TurkuSuomiFiAuth',
     'auth_backends.koha.KohaAuth',
+    'auth_backends.foli.FoliAuth',
 ]
 
 RESTRICTED_AUTHENTICATION_BACKENDS = (
