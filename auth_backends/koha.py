@@ -5,6 +5,7 @@ from urllib.parse import urlencode
 
 import requests
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import render
 from django.urls import reverse
