@@ -43,7 +43,7 @@ class KohaAuth(LegacyAuth):
     FORM_HTML = 'koha/login.html'
 
     def get_user_id(self, details, response):
-        return response['borrowernumber']
+        return response['userid']
 
     def uses_redirect(self):
         return False
@@ -53,7 +53,7 @@ class KohaAuth(LegacyAuth):
 
         try:
             resp = getattr(requests, method)(url, **kwargs)
-            if resp.status_code not in [200, 400]:
+            if resp.status_code != 401:
                 resp.raise_for_status()
         except requests.exceptions.RequestException as err:
             logger.exception('API call to %s failed' % path, exc_info=err)
@@ -80,6 +80,10 @@ class KohaAuth(LegacyAuth):
 
         out['first_name'] = borrower_info.get('firstname', '').strip()
         out['last_name'] = borrower_info.get('surname', '').strip()
+
+        birthdate = borrower_info.get('date_of_birth')
+        birthdate = datetime.strptime(birthdate, '%Y-%m-%d')
+        out['birthdate'] = birthdate.date()
 
         return out
 
@@ -114,7 +118,6 @@ class KohaAuth(LegacyAuth):
 
     def get_borrower_info(self, data):
         self._validate_settings()
-
         request = self.strategy.request
         borrower_card_id = self.data[self.ID_KEY].strip()
         borrower_card_pin = self.data[self.PIN_KEY].strip()
@@ -135,12 +138,10 @@ class KohaAuth(LegacyAuth):
             client_id=settings.KOHA_OAUTH_CLIENT_ID,
             client_secret=settings.KOHA_OAUTH_CLIENT_API_KEY,
             ))
-        
-        # Construct headers with the oauth token
         headers = {
             'Authorization': 'Bearer {}'.format(oauth_token['access_token']),
         }
-        # Construct body for the endpoint call
+
         body = {
             "cardnumber":borrower_card_id,
             "password": borrower_card_pin
@@ -151,19 +152,17 @@ class KohaAuth(LegacyAuth):
             result = self.api_request('post', '/contrib/kohasuomi/auth/patrons/validation', headers=headers, json=body)
         except:
             auditlog.log_authentication_failure(request, self.name, identifier=borrower_card_id)
-            raise AuthenticationFailed('Patron validation request failure.')
+            raise AuthenticationFailed('Patron validation failure.')
 
         if 'error' in result and result['error'] == 'Login failed.':
             auditlog.log_authentication_failure(request, self.name, identifier=borrower_card_id)
             raise AuthenticationFailed('Login returned "Login failed."')
-        
-        borrower_info = result
 
         auditlog.log_authentication_success(request, self.name, identifier=borrower_card_id)
         # Reset the rate limiting on successful login
         ratelimit.get_usage(None, **ratelimit_params, reset=True)
 
-        return borrower_info
+        return result
 
     def auth_complete(self, *args, **kwargs):
         borrower_info = kwargs.get('borrower_info')
