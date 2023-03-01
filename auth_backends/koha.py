@@ -6,6 +6,7 @@ from urllib.parse import urlencode
 import requests
 from django import forms
 from django.core.exceptions import ImproperlyConfigured
+from django.conf import settings
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
