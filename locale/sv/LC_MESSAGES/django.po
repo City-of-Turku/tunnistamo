@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-03-28 09:27+0000\n"
+"POT-Creation-Date: 2023-03-31 05:41+0000\n"
 "PO-Revision-Date: 2019-11-19 15:14+0000\n"
 "Last-Translator: Katarina Pada <katarina.pada@turku.fi>, 2019\n"
 "Language-Team: Swedish (https://www.transifex.com/city-of-helsinki/"
@@ -52,7 +52,6 @@ msgid "Invalid username or password"
 msgstr "Ogiltigt användarnamn eller lösenord"
 
 #: auth_backends/templates/axiell_aurora/login.html
-#: auth_backends/templates/foli/login.html
 #: auth_backends/templates/koha/login.html
 msgid "Library card login"
 msgstr "Inloggning med bibliotekskort"
@@ -68,6 +67,10 @@ msgstr "Inloggning"
 #: auth_backends/templates/koha/login.html
 msgid "Return to login method selection"
 msgstr "Retur till val av inloggning"
+
+#: auth_backends/templates/foli/login.html
+msgid "Föli login"
+msgstr "Inloggning med Föli"
 
 #: content/models.py
 msgid "site owner name"

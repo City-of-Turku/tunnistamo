@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Tunnistamo\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-03-28 09:27+0000\n"
+"POT-Creation-Date: 2023-03-31 05:41+0000\n"
 "PO-Revision-Date: 2019-04-17 07:55+0000\n"
 "Last-Translator: Timo Tuominen <dev@hel.fi>, 2019\n"
 "Language-Team: Finnish (https://www.transifex.com/city-of-helsinki-1/"
@@ -40,7 +40,7 @@ msgstr "Väärä kortinnumero tai PIN-koodi"
 
 #: auth_backends/foli.py
 msgid "Föli username"
-msgstr "Föli käyttäjätunnus"
+msgstr "Föli-käyttäjätunnus"
 
 #: auth_backends/foli.py
 msgid "Password"
@@ -51,7 +51,6 @@ msgid "Invalid username or password"
 msgstr "Virheellinen käyttäjätunnus tai salasana"
 
 #: auth_backends/templates/axiell_aurora/login.html
-#: auth_backends/templates/foli/login.html
 #: auth_backends/templates/koha/login.html
 msgid "Library card login"
 msgstr "Tunnistaudu kirjastokortilla"
@@ -67,6 +66,10 @@ msgstr "Kirjaudu"
 #: auth_backends/templates/koha/login.html
 msgid "Return to login method selection"
 msgstr "Palaa tunnistautumismenetelmän valintaan"
+
+#: auth_backends/templates/foli/login.html
+msgid "Föli login"
+msgstr "Kirjaudu Föli-tunnuksilla"
 
 #: content/models.py
 msgid "site owner name"
