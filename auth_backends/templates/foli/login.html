@@ -2,7 +2,7 @@
 
 {% load i18n bootstrap4 %}
 
-{% block title %}{% trans "Library card login" %}{% endblock %}
+{% block title %}{% trans "Föli login" %}{% endblock %}
 
 {% block content %}
 <form action="{% url 'social:begin' backend='foli' %}" method='post' class='form'{% if form.id %} id='{{ form.id }}'{% endif %}{% if form.non_field_errors %} aria-errormessage='{{ form.id }}-errors'{% endif %}>
