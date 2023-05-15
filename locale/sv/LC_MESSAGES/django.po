@@ -540,3 +540,6 @@ msgstr "Retur till starttjänsten"
 #: users/models.py
 msgid "Short description is required if login method is disabled."
 msgstr "Kort beskrivning krävs om inloggningsmetoden är inaktiverad."
+
+msgid "It is not possible to make a booking with a library card between 15 May at 10 pm and 17 May at midnight. Suomi.fi authentication is in use."
+msgstr "Bokning av tjänster med bibliotekskort är inte möjligt under tiden 15.5 kl. 22.00 – 16.5 kl. 24.00. Suomi.fi-identifiering är i bruk."
