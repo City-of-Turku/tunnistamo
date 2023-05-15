@@ -1,6 +1,7 @@
 from pydoc import locate
 from urllib.parse import parse_qs, urlparse
 
+from time import time
 from django.conf import settings
 from django.contrib.auth import logout as auth_logout
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -9,6 +10,7 @@ from django.urls import reverse
 from django.utils import translation
 from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
+from django.utils.translation import gettext as _
 from django.views.generic import View
 from django.views.generic.base import TemplateView
 from django.views.decorators.cache import never_cache
@@ -150,9 +152,23 @@ class LoginView(TemplateView):
         return super(LoginView, self).get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
+        
+        
+        koha_disabled = False
+        unix_timestamp = time()
+        if 1684177200 <= unix_timestamp <= 1684270800:
+            koha_disabled = True
+
+        for method in self.login_methods:
+            if method.provider_id == 'koha':
+                method.disabled = koha_disabled
+
         context = super(LoginView, self).get_context_data(**kwargs)
         context['login_methods'] = self.login_methods
         context['return_to_rp_uri'] = self.return_to_rp_uri
+        context['koha_disabled'] = koha_disabled
+        context['login_disabled_text'] = _("It is not possible to make a booking with a library card between 15 May at 10 pm and 17 May at midnight. Suomi.fi authentication is in use.")
+
         return context
 
 
