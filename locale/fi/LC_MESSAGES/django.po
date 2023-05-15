@@ -510,3 +510,6 @@ msgstr "Palaa asiointipalveluun"
 #: users/models.py
 msgid "Short description is required if login method is disabled."
 msgstr "Lyhyt kuvaus tarvitaan, jos kirjautumistapa on poissa käytöstä."
+
+msgid "It is not possible to make a booking with a library card between 15 May at 10 pm and 17 May at midnight. Suomi.fi authentication is in use."
+msgstr "Palveluiden varaaminen kirjastokortilla ei ole mahdollista 15.5. klo. 22.00 – 16.5. klo. 24.00 välisenä aikana. Suomi.fi tunnistautuminen on käytössä."
