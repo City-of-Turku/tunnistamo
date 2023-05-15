@@ -13,6 +13,9 @@
   #remember-me-section {
     margin: 1rem 0;
   }
+  .login-disabled-text {
+    color: red;
+  }
 </style>
 {% endblock %}
 
@@ -20,7 +23,9 @@
 <p class="doc">
   {% blocktrans %}You may authenticate to this service by using one of the following login methods.{% endblocktrans %}
 </p>
-
+{% if koha_disabled %}
+  <h6 class='login-disabled-text'>{{login_disabled_text}}</h6>
+{% endif %}
 <div class="login-method-list">
   {% for method in login_methods %}
   <div class="login-method login-method-{{ method.provider_id }}
