@@ -106,10 +106,17 @@ class KohaAuth(LegacyAuth):
             form = KohaLoginForm()
 
         login_method_uri = reverse('login')
-        if request.GET:
-            login_method_uri += '?' + urlencode(request.GET)
+        query_string = ''
 
-        return render(request, self.FORM_HTML, {'form': form, 'login_method_uri': login_method_uri})
+        if request.GET:
+            query_string = urlencode(request.GET)
+            login_method_uri += '?' + query_string
+
+        return render(request, self.FORM_HTML, {
+            'form': form,
+            'login_method_uri': login_method_uri,
+            'query_string': query_string,
+        })
 
     def _validate_settings(self):
         REQUIRED_SETTINGS = ['API_URL']

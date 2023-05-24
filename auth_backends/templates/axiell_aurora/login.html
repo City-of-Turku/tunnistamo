@@ -5,7 +5,7 @@
 {% block title %}{% trans "Library card login" %}{% endblock %}
 
 {% block content %}
-<form action="{% url 'social:begin' backend='axiell_aurora' %}" method='post' class='form'{% if form.id %} id='{{ form.id }}'{% endif %}{% if form.non_field_errors %} aria-errormessage='{{ form.id }}-errors'{% endif %}>
+<form action="{% url 'social:begin' backend='axiell_aurora' %}?{{ query_string }}" method='post' class='form'{% if form.id %} id='{{ form.id }}'{% endif %}{% if form.non_field_errors %} aria-errormessage='{{ form.id }}-errors'{% endif %}>
   {% csrf_token %}
   {% bootstrap_form form %}
   {% buttons %}
