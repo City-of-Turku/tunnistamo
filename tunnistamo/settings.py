@@ -157,6 +157,7 @@ AUTHENTICATION_BACKENDS = [
     'auth_backends.axiell_aurora.AuroraAuth',
     'auth_backends.adfs.turku.TurkuADFS',
     'auth_backends.adfs.opas.OpasADFS',
+    'auth_backends.adfs.opas_student.OpasStudentADFS',
     'auth_backends.turku_suomifi.TurkuSuomiFiAuth',
     'auth_backends.koha.KohaAuth',
     'auth_backends.foli.FoliAuth',
