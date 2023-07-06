@@ -34,19 +34,26 @@ class TurkuADFS(SAMLAuth):
 
     def find_valid_certificate(self, idp):
         now = datetime.utcnow()
-        # Find the first valid certificate based on the certificate
-        # validity timestamps.
+        furthest_date = datetime(1970, 1, 1)
+        furthest_cert = None
+        # Pick from the list of certificates the one with expiration date furthest in the future
         for cert_b64 in idp['x509certMulti']['signing']:
             cert_buf = base64.b64decode(cert_b64)
             cert = x509.load_der_x509_certificate(cert_buf, default_backend())
+
             if now > cert.not_valid_after:
                 continue
             if now < cert.not_valid_before:
                 continue
-            break
-        else:
+
+            if furthest_cert is None or cert.not_valid_after > furthest_date:
+                furthest_cert = cert_b64
+                furthest_date = cert.not_valid_after
+
+        if furthest_cert is None:
             raise Exception('No valid X.509 certificates found in SAML2 metadata')
-        return cert_b64
+
+        return furthest_cert
 
     @cached_property
     def remote_metadata(self):
