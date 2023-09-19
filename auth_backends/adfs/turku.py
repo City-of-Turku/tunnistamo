@@ -39,7 +39,6 @@ class TurkuADFS(SAMLAuth):
         certificates = []
 
         for cert_b64 in idp['x509certMulti']['signing']:
-            idp['x509certMulti']
             cert_buf = base64.b64decode(cert_b64)
             cert = x509.load_der_x509_certificate(cert_buf, default_backend())
 
