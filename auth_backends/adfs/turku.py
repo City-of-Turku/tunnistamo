@@ -34,27 +34,21 @@ class TurkuADFS(SAMLAuth):
 
     def find_valid_certificates(self, idp):
         now = datetime.utcnow()
-
-        certMulti = idp['x509certMulti']
         certificates = []
 
         for cert_b64 in idp['x509certMulti']['signing']:
-            cert_buf = base64.b64decode(cert_b64)
-            cert = x509.load_der_x509_certificate(cert_buf, default_backend())
-
-            if now > cert.not_valid_after:
-                continue
+            cert = load_pem_x509_certificate(cert_b64.encode('utf-8'), default_backend())
             if now < cert.not_valid_before:
                 continue
 
-            certificates.append(cert)
+            certificates.append(cert_b64)
 
-        if not len(certificates):
+        if not certificates:
             raise Exception('No valid X.509 certificates found in SAML2 metadata')
 
-        certMulti['signing'] = certificates
+        idp['x509certMulti']['signing'] = certificates
 
-        return certMulti
+        return {'signing': certificates, 'encryption': idp['x509certMulti']['encryption']}
 
     @cached_property
     def remote_metadata(self):
