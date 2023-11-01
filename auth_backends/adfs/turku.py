@@ -48,7 +48,7 @@ class TurkuADFS(SAMLAuth):
 
         idp['x509certMulti']['signing'] = certificates
 
-        return {'signing': certificates, 'encryption': idp['x509certMulti']['encryption']}
+        return { 'signing': certificates, 'encryption': idp['x509certMulti']['encryption'] }
 
     @cached_property
     def remote_metadata(self):
