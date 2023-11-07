@@ -32,21 +32,25 @@ class TurkuADFS(SAMLAuth):
         ret['security']['wantNameId'] = False
         return ret
 
-    def find_valid_certificate(self, idp):
+    def find_valid_certificates(self, idp):
         now = datetime.utcnow()
-        # Find the first valid certificate based on the certificate
-        # validity timestamps.
+        certificates = []
+
         for cert_b64 in idp['x509certMulti']['signing']:
             cert_buf = base64.b64decode(cert_b64)
             cert = x509.load_der_x509_certificate(cert_buf, default_backend())
+
             if now > cert.not_valid_after:
                 continue
             if now < cert.not_valid_before:
                 continue
-            break
-        else:
+
+            certificates.append(cert_b64)
+
+        if not len(certificates):
             raise Exception('No valid X.509 certificates found in SAML2 metadata')
-        return cert_b64
+
+        return { 'signing': certificates, 'encryption': idp['x509certMulti']['encryption'] }
 
     @cached_property
     def remote_metadata(self):
@@ -60,11 +64,13 @@ class TurkuADFS(SAMLAuth):
             idp_config = OneLogin_Saml2_IdPMetadataParser.parse_remote(self.metadata_url)
 
         idp = idp_config['idp']
-        cert = self.find_valid_certificate(idp)
+
+        certMulti = self.find_valid_certificates(idp)
+
         out = {
             'entity_id': idp['entityId'],
             'url': idp['singleSignOnService']['url'],
-            'x509cert': cert,
+            'x509certMulti': certMulti
         }
         cache.set(cache_key, json.dumps(idp_config), timeout=24 * 3600)
 
