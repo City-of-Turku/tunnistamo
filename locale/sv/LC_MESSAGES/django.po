@@ -334,7 +334,7 @@ msgstr "Grundläggande profil"
 msgid ""
 "Access to your basic information, which includes your first and last names."
 msgstr ""
-"Åtkomst till din grundinformation, vilket inkluderar ditt för- och "
+"Åtkomst till din grundinformation, vilket inkluderar dina för- och "
 "efternamn."
 
 #: oidc_apis/scopes.py
