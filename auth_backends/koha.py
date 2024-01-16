@@ -32,7 +32,7 @@ class KohaLoginForm(forms.Form):
     borrower_card_id = forms.CharField(label=_("Library card identifier"), max_length=32)
     borrower_pin = forms.CharField(
         label=_("Card PIN"),
-        max_length=4,
+        max_length=10,
         widget=forms.TextInput(attrs={'type': 'password'})
     )
 
