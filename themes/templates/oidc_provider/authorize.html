@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 {% block content %}
-<h2>{% trans 'Permission request' %}</h2>
+<h1>{% trans 'Permission request' %}</h1>
 
   <p>{% blocktrans with service_name=client.name %}Service <strong>{{ service_name }}</strong> is requesting access to the following information of your user account{% endblocktrans %}</p>
 
