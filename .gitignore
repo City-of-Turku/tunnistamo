@@ -11,5 +11,7 @@
 .python-version
 .coverage
 .cache
+.env
 .idea
+/certs
 /data
