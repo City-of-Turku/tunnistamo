@@ -57,6 +57,9 @@ env = environ.Env(
     SOCIAL_AUTH_SUOMIFI_ENABLED_IDPS=(str, ""),
     SOCIAL_AUTH_SUOMIFI_UI_INFO=(str, ""),
     SOCIAL_AUTH_SUOMIFI_UI_LOGO=(str, ""),
+
+    # Needs to be true for Dockerfile collectstatic, since cert files don't yet exist then
+    SKIP_CERTIFICATES=(str, ""),
 )
 
 if os.path.exists(os.path.join(BASE_DIR, '.env')):
@@ -685,6 +688,78 @@ CONTENT_SECURITY_POLICY = {
     'report_groups': {},
 }
 
+# Turku-specific settings
+SOCIAL_AUTH_AXIELL_AURORA_API_URL = env("SOCIAL_AUTH_AXIELL_AURORA_API_URL")
+SOCIAL_AUTH_AXIELL_AURORA_API_USERNAME = env("SOCIAL_AUTH_AXIELL_AURORA_API_USERNAME")
+SOCIAL_AUTH_AXIELL_AURORA_API_PASSWORD = env("SOCIAL_AUTH_AXIELL_AURORA_API_PASSWORD")
+SOCIAL_AUTH_TURKU_SUOMIFI_API_URL = env("SOCIAL_AUTH_TURKU_SUOMIFI_API_URL")
+SOCIAL_AUTH_TURKU_SUOMIFI_API_KEY = env("SOCIAL_AUTH_TURKU_SUOMIFI_API_KEY")
+SOCIAL_AUTH_TURKU_SUOMIFI_SP_NAME = 'Tunnistamo'
+SOCIAL_AUTH_TURKU_ADFS_TECHNICAL_CONTACT = {
+    'givenName': 'Technical Contact',
+    'emailAddress': 'turun.kaupunki@turku.fi',
+}
+SOCIAL_AUTH_TURKU_ADFS_SUPPORT_CONTACT = {
+    'givenName': 'Support Contact',
+    'emailAddress': 'turun.kaupunki@turku.fi',
+}
+SOCIAL_AUTH_TURKU_ADFS_ORG_INFO = {
+    "en-US": {
+        "name": "Turku",
+        "displayname": "City of Turku",
+        "url": "https://www.turku.fi"
+    },
+    "fi-FI": {
+        "name": "Turku",
+        "displayname": "Turun kaupunki",
+        "url": "https://www.turku.fi"
+    },
+    "sv-FI": {
+        "name": "Åbo",
+        "displayname": "Åbo stad",
+        "url": "https://www.turku.fi"
+    },
+}
+SOCIAL_AUTH_TURKU_ADFS_SP_ENTITY_ID = env("SOCIAL_AUTH_TURKU_ADFS_SP_ENTITY_ID")
+if env("SKIP_CERTIFICATES") != "true":
+    SOCIAL_AUTH_TURKU_ADFS_SP_PUBLIC_CERT = open(os.path.join(BASE_DIR, 'certs', 'turku_adfs.crt')).read()
+    SOCIAL_AUTH_TURKU_ADFS_SP_PRIVATE_KEY = open(os.path.join(BASE_DIR, 'certs', 'turku_adfs.key')).read()
+SOCIAL_AUTH_OPAS_ADFS_TECHNICAL_CONTACT = {
+    'givenName': 'Technical Contact',
+    'emailAddress': 'turun.kaupunki@turku.fi',
+}
+SOCIAL_AUTH_OPAS_ADFS_SUPPORT_CONTACT = {
+    'givenName': 'Support Contact',
+    'emailAddress': 'turun.kaupunki@turku.fi',
+}
+SOCIAL_AUTH_OPAS_ADFS_ORG_INFO = {
+    "en-US": {
+        "name": "Turku",
+        "displayname": "City of Turku",
+        "url": "https://www.turku.fi"
+    },
+    "fi-FI": {
+        "name": "Turku",
+        "displayname": "Turun kaupunki",
+        "url": "https://www.turku.fi"
+    },
+    "sv-FI": {
+        "name": "Åbo",
+        "displayname": "Åbo stad",
+        "url": "https://www.turku.fi"
+    },
+}
+SOCIAL_AUTH_OPAS_ADFS_SP_ENTITY_ID = env("SOCIAL_AUTH_OPAS_ADFS_SP_ENTITY_ID")
+if env("SKIP_CERTIFICATES") != "true":
+    SOCIAL_AUTH_OPAS_ADFS_SP_PUBLIC_CERT = open(os.path.join(BASE_DIR, 'certs', 'turku_adfs.crt')).read()
+    SOCIAL_AUTH_OPAS_ADFS_SP_PRIVATE_KEY = open(os.path.join(BASE_DIR, 'certs', 'turku_adfs.key')).read()
+SOCIAL_AUTH_KOHA_API_URL = 'https://vaski.koha-suomi.fi/api/v1'
+SOCIAL_AUTH_FOLI_API_URL = 'https://nettilataus.turku.fi/netloading-svc/api'
+KOHA_OAUTH_CLIENT_ID = env("KOHA_OAUTH_CLIENT_ID")
+KOHA_OAUTH_CLIENT_API_KEY = env("KOHA_OAUTH_CLIENT_API_KEY")
+SOCIAL_AUTH_FOLI_API_ID = env("SOCIAL_AUTH_FOLI_API_ID")
+SOCIAL_AUTH_FOLI_API_KEY = env("SOCIAL_AUTH_FOLI_API_KEY")
+# End of Turku-specific settings
 
 # local_settings.py can be used to override environment-specific settings
 # like database and email that differ between development and production.
