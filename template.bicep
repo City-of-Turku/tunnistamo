@@ -1,5 +1,6 @@
 param location string = resourceGroup().location
 param apiImageName string
+param apiInternalUrl string
 param apiUrl string
 @description('API WebApp name. Must be globally unique')
 param apiWebAppName string
@@ -51,7 +52,8 @@ param apiAppSettings object = {
   TUNNISTAMO_THEME: 'turku'
   STATIC_ROOT: '/fileshare/staticroot'
   MEDIA_ROOT: '/fileshare/mediaroot'
-  ALLOWED_HOSTS: '${apiWebAppName}.azurewebsites.net,tunnistamo-test.turku.fi,testitunnistamo.turku.fi,127.0.0.1,localhost' // TODO
+  ALLOWED_HOSTS: '${apiInternalUrl},tunnistamo-test.turku.fi,testitunnistamo.turku.fi,127.0.0.1,localhost' // TODO
+  CSRF_TRUSTED_ORIGINS: apiUrl
   NODE_MODULES_ROOT: '/var/tunnistamo/node_modules'
   SECRET_KEY: secretKey
   SOCIAL_AUTH_AXIELL_AURORA_API_URL: 'https://aurora2.turku.fi:8204'
