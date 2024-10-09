@@ -1,6 +1,8 @@
 param location string = resourceGroup().location
+param utcNowValue string = utcNow()
 param apiImageName string
 param apiInternalUrl string
+@description('Public url, e.g. tunnistamo-testi.turku.fi, without https://')
 param apiUrl string
 @description('API WebApp name. Must be globally unique')
 param apiWebAppName string
@@ -54,6 +56,8 @@ param apiAppSettings object = {
   MEDIA_ROOT: '/fileshare/mediaroot'
   ALLOWED_HOSTS: '${apiInternalUrl},tunnistamo-test.turku.fi,testitunnistamo.turku.fi,127.0.0.1,localhost' // TODO
   CSRF_TRUSTED_ORIGINS: apiUrl
+  IPWARE_META_PRECEDENCE_ORDER: 'REMOTE_ADDR'
+  DJANGO_SETTINGS_MODULE: 'tunnistamo.settings'
   NODE_MODULES_ROOT: '/var/tunnistamo/node_modules'
   SECRET_KEY: secretKey
   SOCIAL_AUTH_AXIELL_AURORA_API_URL: 'https://aurora2.turku.fi:8204'
@@ -421,7 +425,7 @@ resource dbConfigurationClientEncoding 'Microsoft.DBforPostgreSQL/flexibleServer
     value: 'UTF8'
     source: 'user-override'
   }
-  dependsOn: [waitForDbReady]
+  dependsOn: [waitForDbReadyAzureExtensionsConfigured]
 }
 
 resource dbConfigurationAzureExtensions 'Microsoft.DBforPostgreSQL/flexibleServers/configurations@2023-12-01-preview' = {
@@ -448,15 +452,30 @@ resource waitForDbReady 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   name: 'waitForDbReady'
   location: location
   properties: {
+    forceUpdateTag: utcNowValue // Run this script every time
     azPowerShellVersion: '3.0'
-    scriptContent: 'start-sleep -Seconds 600'
+    scriptContent: 'start-sleep -Seconds 300'
     cleanupPreference: 'Always'
     retentionInterval: 'PT1H'
   }
   dependsOn: [db]
 }
 
-resource waitForDbReadyAndConfigured 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
+resource waitForDbReadyAzureExtensionsConfigured 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
+  kind: 'AzurePowerShell'
+  name: 'waitForDbReady2'
+  location: location
+  properties: {
+    forceUpdateTag: utcNowValue // Run this script every time
+    azPowerShellVersion: '3.0'
+    scriptContent: 'start-sleep -Seconds 300'
+    cleanupPreference: 'Always'
+    retentionInterval: 'PT1H'
+  }
+  dependsOn: [dbConfigurationAzureExtensions]
+}
+
+resource waitForDbReadyAndAllConfigured 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   kind: 'AzurePowerShell'
   name: 'waitForDbReadyAndConfigured'
   location: location
@@ -719,7 +738,7 @@ resource keyvault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
 }
 
 @description('Key Vault Secret User role')
-resource keyvaultSecretUserRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
+resource keyVaultSecretUserRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
   scope: resourceGroup()
   name: '4633458b-17de-408a-b874-0445c86b69e6'
 }
@@ -734,9 +753,9 @@ resource acrPullRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-04-
 resource webAppKeyvaultSecretUserRoleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
   for i in range(0, length(webAppRequirements)): if (webAppRequirements[i].allowKeyvaultSecrets) {
     scope: keyvault
-    name: guid(resourceGroup().id, webApps[i].id, keyvaultSecretUserRoleDefinition.id)
+    name: guid(resourceGroup().id, webApps[i].id, keyVaultSecretUserRoleDefinition.id)
     properties: {
-      roleDefinitionId: keyvaultSecretUserRoleDefinition.id
+      roleDefinitionId: keyVaultSecretUserRoleDefinition.id
       principalId: webApps[i].identity.principalId
       principalType: 'ServicePrincipal'
     }

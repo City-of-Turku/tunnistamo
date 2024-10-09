@@ -21,6 +21,8 @@ env = environ.Env(
     DATABASE_URL=(str, "postgres:///tunnistamo"),
     CACHE_URL=(str, "locmemcache://tunnistamo"),
     ALLOWED_HOSTS=(list, []),
+    CSRF_TRUSTED_ORIGINS = (list, []),
+    IPWARE_META_PRECEDENCE_ORDER = (list, []),
     TUNNISTAMO_THEME=(str, 'helsinki'),
     TRUSTED_PROXIES=(list, []),
 
@@ -73,6 +75,7 @@ DEBUG = env("DEBUG")
 TEMPLATE_DEBUG = False
 
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
+CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
 
 X_FRAME_OPTIONS = 'DENY'
 
@@ -676,7 +679,7 @@ if not SOCIAL_AUTH_SUOMIFI_UI_LOGO:
 # End of Suomi.fi section
 ###
 
-IPWARE_META_PRECEDENCE_ORDER = ('REMOTE_ADDR',)
+IPWARE_META_PRECEDENCE_ORDER = env('IPWARE_META_PRECEDENCE_ORDER')
 
 CONTENT_SECURITY_POLICY = {
     # The full policy including report-uri and/or report-to specification.

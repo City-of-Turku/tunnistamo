@@ -215,13 +215,8 @@ switch ($args[0]) {
         az group create -l swedencentral -n $resourceGroup
         az deployment group create --template-file ./template-certs-keyvault.bicep --parameters 'template-certs-keyvault.bicepparam' --resource-group $resourceGroup @($args | Select-Object -Skip 1)
         $thumbprint = Read-Host "Created resource group ${resourceGroup}. Add turku_adfs certificate to the key vault manually (allow your IP and take Certificate Officer rights) and enter the certificate's thumbprint now"
-        #$combinedParameters = $parameters + (Get-SecretParametersHashtable) + @{ turkuAdfsCertificateThumbprint = $thumbprint }
-        #$combinedParameters.Remove('Length')
-        #echo $combinedParameters
         az deployment group create --template-file ./template.bicep --parameters turkuAdfsCertificateThumbprint=$thumbprint --parameters 'template.bicepparam' --parameters (Get-SecretParametersStringJoinedBySpaceExceptResourceGroup) --resource-group $resourceGroup @($args | Select-Object -Skip 1)
-        #New-AzResourceGroupDeployment -Name template -ResourceGroupName $resourceGroup -TemplateFile ./template.bicep -TemplateParameterFile '.\template.bicepparam' -TemplateParameterObject ((Get-SecretParametersHashtable | ConvertTo-HashTable)) -DeploymentDebugLogLevel All
-        #New-AzResourceGroupDeployment -Name template -ResourceGroupName $resourceGroup -TemplateFile ./template.bicep -TemplateParameterObject $combinedParameters -DeploymentDebugLogLevel All
-        Read-Host "Created the rest of the resources. Go to the API application -> settings -> certificates -> bring your own certificates -> add -> import from key vault -> select the kv and cert you uploaded"
+        Read-Host "Created the rest of the resources. Go to the API application -> settings -> certificates -> bring your own certificates -> add -> import from key vault -> select the kv and cert you uploaded and then press enter"
         return
     }
     "build" {
