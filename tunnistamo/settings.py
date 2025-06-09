@@ -265,6 +265,8 @@ STATIC_URL = env('STATIC_URL')
 MEDIA_ROOT = env("MEDIA_ROOT")
 MEDIA_URL = env('MEDIA_URL')
 
+USE_X_FORWARDED_HOST = True
+
 NODE_MODULES_PATH = env("NODE_MODULES_ROOT")
 STATICFILES_DIRS = [
     ('styles', os.path.join(BASE_DIR, 'themes', 'styles')),
