@@ -40,7 +40,7 @@ class SuomiFiAssociation(object):
 class TurkuSuomiFiAuth(LegacyAuth):
     name = 'turku_suomifi'
     EXTRA_DATA = ['non_disclosure', 'postal_code', 'municipality_name', 'municipality_code']
-
+    print("Turun SuomiFi:", name, flush=True)
     def api_url(self):
         return self.setting('API_URL')
 

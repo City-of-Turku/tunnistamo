@@ -56,6 +56,7 @@ param apiAppSettings object = {
   MEDIA_ROOT: '/fileshare/mediaroot'
   ALLOWED_HOSTS: '${apiInternalUrl},tunnistamo-test.turku.fi,testitunnistamo.turku.fi,127.0.0.1,localhost' // TODO
   CSRF_TRUSTED_ORIGINS: apiUrl
+  USE_X_FORWARDED_HOST: true
   IPWARE_META_PRECEDENCE_ORDER: 'REMOTE_ADDR'
   DJANGO_SETTINGS_MODULE: 'tunnistamo.settings'
   NODE_MODULES_ROOT: '/var/tunnistamo/node_modules'
