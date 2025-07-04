@@ -23,7 +23,9 @@ class NoAssociatedOID(FriendlySocialAuthException):
 
 class TurkuADFS(SAMLAuth):
     name = 'turku_adfs'
-    metadata_url = 'https://sts.turku.fi/federationmetadata/2007-06/federationmetadata.xml'
+    # metadata_url = 'https://sts.turku.fi/federationmetadata/2007-06/federationmetadata.xml'
+    # metadata_url = 'https://login.microsoftonline.com/6c5e2c8a-d3f0-4a0b-9658-42502c73e17b/federationmetadata/2007-06/federationmetadata.xml?appid=818f1c36-cfc7-455e-a779-72fbc866e071'
+    metadata_url = 'https://login.microsoftonline.com/6c5e2c8a-d3f0-4a0b-9658-42502c73e17b/federationmetadata/2007-06/federationmetadata.xml'
 
     def generate_saml_config(self, idp=None):
         ret = super().generate_saml_config(idp)
@@ -46,10 +48,11 @@ class TurkuADFS(SAMLAuth):
                 continue
 
             certificates.append(cert_b64)
+            print("certificates:", certificates, flush=True)
 
         if not len(certificates):
             raise Exception('No valid X.509 certificates found in SAML2 metadata')
-
+        print("Found certs:", { 'signing': certificates, 'encryption': idp['x509certMulti']['encryption'] } , flush=True)
         return { 'signing': certificates, 'encryption': idp['x509certMulti']['encryption'] }
 
     @cached_property
@@ -73,7 +76,7 @@ class TurkuADFS(SAMLAuth):
             'x509certMulti': certMulti
         }
         cache.set(cache_key, json.dumps(idp_config), timeout=24 * 3600)
-
+        print("out", out, flush=True)
         return out
 
     def get_idp(self, idp_name=None):

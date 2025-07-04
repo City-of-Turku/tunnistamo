@@ -15,3 +15,9 @@
 .idea
 /certs
 /data
+
+# Misc
+.vscode
+
+# Secrets
+secrets.*

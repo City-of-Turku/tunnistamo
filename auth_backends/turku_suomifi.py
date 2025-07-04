@@ -40,7 +40,7 @@ class SuomiFiAssociation(object):
 class TurkuSuomiFiAuth(LegacyAuth):
     name = 'turku_suomifi'
     EXTRA_DATA = ['non_disclosure', 'postal_code', 'municipality_name', 'municipality_code']
-
+    print("Turun SuomiFi:", name, flush=True)
     def api_url(self):
         return self.setting('API_URL')
 
@@ -202,7 +202,8 @@ class TurkuSuomiFiAuth(LegacyAuth):
         status_code = data.get('status_code', '')
         if status_code.lower() != 'success':
             auditlog.log_authentication_failure(request, self.name)
-            raise AuthFailed(self, 'Authentication unsuccessful: %s' % status_code)
+            status_message = data.get('status_message', '')
+            raise AuthFailed(self, 'Authentication unsuccessful: %s %s' % (status_code, status_message))
 
         oid = data.get('oid', '')
         if not oid:

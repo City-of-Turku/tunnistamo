@@ -2,6 +2,19 @@
 
 set -e
 
+# settings.py reads the following files. We use Key Vault import to store the certificate securely and use WEBSITE_LOAD_CERTIFICATES environment variable to tell Azure Web App to load the certificate from Key Vault and mount it to /var/ssl/private/(thumbprint).p12. We then split the certificate back into a .key and .crt pair here.
+mkdir -p /app/certs
+openssl pkcs12 -in /var/ssl/private/$TURKU_ADFS_CERTIFICATE_THUMBPRINT.p12 -nocerts -out /app/certs/turku_adfs.key -nodes -passin pass:
+openssl pkcs12 -in /var/ssl/private/$TURKU_ADFS_CERTIFICATE_THUMBPRINT.p12 -clcerts -nokeys -out /app/certs/turku_adfs.crt -passin pass:
+chown appuser /app/certs/*
+
+if [[ "$ENABLE_SSH" = "true" ]]; then
+      echo Enabling SSH
+      service ssh start
+      eval $(printenv | sed -n "/^PWD=/!s/^\([^=]\+\)=\(.*\)$/export \1=\2/p" | sed 's/"/\\\"/g' | sed '/=/s//="/' | sed 's/$/"/' >> /etc/profile)
+      echo Enabled SSH
+fi
+
 if [ -n "$DATABASE_HOST" ]; then
   until nc -z -v -w30 "$DATABASE_HOST" 5432
   do

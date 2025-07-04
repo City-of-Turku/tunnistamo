@@ -31,3 +31,7 @@ coreapi
 python3-saml>=1.8.0
 ruamel.yaml
 git+https://github.com/City-of-Helsinki/django-translation-checker.git@master
+
+# Azure Redis
+redis==2.10.6
+django-redis==4.0.0

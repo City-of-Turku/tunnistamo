@@ -19,7 +19,7 @@ django-bootstrap4==1.0.1
 django-compressor==2.3
 django-cors-headers==3.1.1
 django-crequest==2018.5.11
-django-environ==0.4.5
+django-environ==0.5.0
 django-filter==2.2.0
 django-helusers==0.5.2
 django-inline-svg==0.1.1
@@ -59,6 +59,8 @@ python3-saml==1.8.0
 pytz==2019.3              # via django
 raven==6.10.0
 rcssmin==1.0.6            # via django-compressor
+redis==2.10.6
+django-redis==4.0.0
 requests==2.22.0
 requests-oauthlib==1.2.0  # via django-allauth, social-auth-core
 rjsmin==1.1.0             # via django-compressor
