@@ -202,7 +202,8 @@ class TurkuSuomiFiAuth(LegacyAuth):
         status_code = data.get('status_code', '')
         if status_code.lower() != 'success':
             auditlog.log_authentication_failure(request, self.name)
-            raise AuthFailed(self, 'Authentication unsuccessful: %s' % status_code)
+            status_message = data.get('status_message', '')
+            raise AuthFailed(self, 'Authentication unsuccessful: %s %s' % (status_code, status_message))
 
         oid = data.get('oid', '')
         if not oid:
