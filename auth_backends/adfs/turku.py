@@ -37,18 +37,29 @@ class TurkuADFS(SAMLAuth):
     def find_valid_certificates(self, idp):
         now = datetime.utcnow()
         certificates = []
+        print("idp content:", idp, flush=True)
+        print("idp x509cert:", idp['x509cert'], flush=True)
+        #for cert_b64 in idp['x509certMulti']['signing']:
+        #for cert_b64 in idp['signing']:
+        #for cert_b64 in idp['X509Data']['X509Certificate']:
+        certificates.append(idp['x509cert'])
+        # for cert_b64 in idp['x509cert']:
+        #     print("cert_b64:", cert_b64, flush=True)
+        #     #cert_buf = base64.b64decode(cert_b64)
+        #     missing_padding = len(cert_b64) % 4
+        #     if missing_padding:
+        #         cert_b64 += '=' * (4 - missing_padding)
 
-        for cert_b64 in idp['x509certMulti']['signing']:
-            cert_buf = base64.b64decode(cert_b64)
-            cert = x509.load_der_x509_certificate(cert_buf, default_backend())
+        #     cert_buf = base64.b64decode(cert_b64)
+        #     cert = x509.load_der_x509_certificate(cert_buf, default_backend())
+        #     print("signing cert:", cert, flush=True)
+        #     if now > cert.not_valid_after:
+        #         continue
+        #     if now < cert.not_valid_before:
+        #         continue
 
-            if now > cert.not_valid_after:
-                continue
-            if now < cert.not_valid_before:
-                continue
-
-            certificates.append(cert_b64)
-            print("certificates:", certificates, flush=True)
+        #     certificates.append(cert_b64)
+        print("certificates:", certificates, flush=True)
 
         if not len(certificates):
             raise Exception('No valid X.509 certificates found in SAML2 metadata')
