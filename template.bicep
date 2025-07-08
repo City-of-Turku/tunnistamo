@@ -1,5 +1,6 @@
 param location string = resourceGroup().location
 param utcNowValue string = utcNow()
+param isDevelopment bool
 param apiImageName string
 param apiInternalUrl string
 @description('Public url, e.g. tunnistamo-testi.turku.fi, without https://')
@@ -54,9 +55,12 @@ param apiAppSettings object = {
   TUNNISTAMO_THEME: 'turku'
   STATIC_ROOT: '/fileshare/staticroot'
   MEDIA_ROOT: '/fileshare/mediaroot'
-  ALLOWED_HOSTS: '${apiInternalUrl},tunnistamo-test.turku.fi,testitunnistamo.turku.fi,127.0.0.1,localhost' // TODO
+  ALLOWED_HOSTS: isDevelopment ?
+    '${apiInternalUrl},tunnistamo-test.turku.fi,testitunnistamo.turku.fi,127.0.0.1,localhost'
+    : '${apiInternalUrl},tunnistamo.turku.fi,127.0.0.1,localhost'
   CSRF_TRUSTED_ORIGINS: apiUrl
   USE_X_FORWARDED_HOST: true
+  USE_X_FORWARDED_PORT: true
   IPWARE_META_PRECEDENCE_ORDER: 'REMOTE_ADDR'
   DJANGO_SETTINGS_MODULE: 'tunnistamo.settings'
   NODE_MODULES_ROOT: '/var/tunnistamo/node_modules'
@@ -64,10 +68,12 @@ param apiAppSettings object = {
   SOCIAL_AUTH_AXIELL_AURORA_API_URL: 'https://aurora2.turku.fi:8204'
   SOCIAL_AUTH_AXIELL_AURORA_API_USERNAME: 'TurkuTunnistamo'
   SOCIAL_AUTH_AXIELL_AURORA_API_PASSWORD: socialAuthAxiellAuroraApiPassword
-  SOCIAL_AUTH_TURKU_SUOMIFI_API_URL: 'https://qadigiaurajoki.turku.fi:9443/tunnistautuminen/api'
+  SOCIAL_AUTH_TURKU_SUOMIFI_API_URL: isDevelopment ?
+   'https://qadigiaurajoki.turku.fi:9443/tunnistautuminen/api'
+   : 'https://digiaurajoki.turku.fi:9443/tunnistautuminen/api'
   SOCIAL_AUTH_TURKU_SUOMIFI_API_KEY: socialAuthTurkuSuomiFiApiKey
-  SOCIAL_AUTH_TURKU_ADFS_SP_ENTITY_ID: 'https://testitunnistamo.turku.fi/'
-  SOCIAL_AUTH_OPAS_ADFS_SP_ENTITY_ID: 'https://testitunnistamo.turku.fi/'
+  SOCIAL_AUTH_TURKU_ADFS_SP_ENTITY_ID: isDevelopment ? 'https://testitunnistamo.turku.fi/' : 'https://tunnistamo.turku.fi/'
+  SOCIAL_AUTH_OPAS_ADFS_SP_ENTITY_ID: isDevelopment ? 'https://testitunnistamo.turku.fi/' : 'https://tunnistamo.turku.fi/'
   KOHA_OAUTH_CLIENT_ID: '3ae0c930-62a2-43e4-a521-134601f60159'
   KOHA_OAUTH_CLIENT_API_KEY: kohaOauthClientApiKey
   SOCIAL_AUTH_FOLI_API_ID: 'tunnistamo'
