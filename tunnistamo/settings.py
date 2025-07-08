@@ -22,6 +22,8 @@ env = environ.Env(
     CACHE_URL=(str, "locmemcache://tunnistamo"),
     ALLOWED_HOSTS=(list, []),
     CSRF_TRUSTED_ORIGINS = (list, []),
+    USE_X_FORWARDED_HOST=(bool, True),
+    USE_X_FORWARDED_PORT=(bool, True),
     IPWARE_META_PRECEDENCE_ORDER = (list, []),
     TUNNISTAMO_THEME=(str, 'helsinki'),
     TRUSTED_PROXIES=(list, []),
@@ -71,6 +73,11 @@ if os.path.exists(os.path.join(BASE_DIR, '.env')):
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 DEBUG = env("DEBUG")
+
+# Added
+SITE_URL='localhost:8000'
+USE_X_FORWARDED_HOST = env('USE_X_FORWARDED_HOST')
+USE_X_FORWARDED_PORT = env('USE_X_FORWARDED_PORT')
 
 TEMPLATE_DEBUG = False
 
@@ -264,8 +271,6 @@ STATIC_URL = env('STATIC_URL')
 
 MEDIA_ROOT = env("MEDIA_ROOT")
 MEDIA_URL = env('MEDIA_URL')
-
-USE_X_FORWARDED_HOST = True
 
 NODE_MODULES_PATH = env("NODE_MODULES_ROOT")
 STATICFILES_DIRS = [
