@@ -32,13 +32,15 @@ class TurkuADFS(SAMLAuth):
         ret['security']['wantAssertionsSigned'] = True,
         # ADFS doesn't reply with NameID
         ret['security']['wantNameId'] = False
+        # TKUAOK-15: RequestedAuthnContext cannot be limited
+        ret['security']['requestedAuthnContext'] = False
         return ret
 
     def find_valid_certificates(self, idp):
         now = datetime.utcnow()
         certificates = []
-        print("idp content:", idp, flush=True)
-        print("idp x509cert:", idp['x509cert'], flush=True)
+        # print("idp content:", idp, flush=True)
+        # print("idp x509cert:", idp['x509cert'], flush=True)
         #for cert_b64 in idp['x509certMulti']['signing']:
         #for cert_b64 in idp['signing']:
         #for cert_b64 in idp['X509Data']['X509Certificate']:
@@ -59,7 +61,7 @@ class TurkuADFS(SAMLAuth):
         #         continue
 
         #     certificates.append(cert_b64)
-        print("certificates:", certificates, flush=True)
+        # print("certificates:", certificates, flush=True)
 
         if not len(certificates):
             raise Exception('No valid X.509 certificates found in SAML2 metadata')
