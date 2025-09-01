@@ -1,5 +1,5 @@
 # =========================================================
-FROM helsinkitest/python-node:3.6-12-slim as staticbuilder
+FROM helsinkitest/python-node:3.6-12-slim AS staticbuilder
 # ---------------------------------------------------------
 # Stage for building static files for
 # the project. Installs Node as that
@@ -31,7 +31,7 @@ COPY . /app/
 RUN CACHE_URL=pymemcache:// SOCIAL_AUTH_AXIELL_AURORA_API_URL=none SOCIAL_AUTH_AXIELL_AURORA_API_USERNAME=none SOCIAL_AUTH_AXIELL_AURORA_API_PASSWORD=none SOCIAL_AUTH_TURKU_SUOMIFI_API_URL=none SOCIAL_AUTH_TURKU_SUOMIFI_API_KEY=none SOCIAL_AUTH_TURKU_ADFS_SP_ENTITY_ID=none SOCIAL_AUTH_OPAS_ADFS_SP_ENTITY_ID=none KOHA_OAUTH_CLIENT_ID=none KOHA_OAUTH_CLIENT_API_KEY=none SOCIAL_AUTH_FOLI_API_ID=none SOCIAL_AUTH_FOLI_API_KEY=none SKIP_CERTIFICATES=true python manage.py collectstatic --noinput
 
 # ===========================================
-FROM helsinkitest/python:3.6-slim as appbase
+FROM helsinkitest/python:3.6-slim AS appbase
 # ===========================================
 
 WORKDIR /app
@@ -75,7 +75,7 @@ COPY --from=staticbuilder --chown=appuser:appuser /app/static /fileshare/staticr
 COPY --from=staticbuilder --chown=appuser:appuser /app/node_modules /var/tunnistamo/node_modules
 
 # ==========================
-FROM appbase as production
+FROM appbase AS production
 # ==========================
 
 COPY --chown=appuser:appuser . /app/
