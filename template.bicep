@@ -3,7 +3,7 @@ param utcNowValue string = utcNow()
 param isDevelopment bool
 param apiImageName string
 param apiInternalUrl string
-@description('Public url, e.g. tunnistamo-testi.turku.fi, without https://')
+@description('Public url, e.g. testitunnistamo.turku.fi, without https://')
 param apiUrl string
 @description('API WebApp name. Must be globally unique')
 param apiWebAppName string
@@ -55,7 +55,7 @@ param apiAppSettings object = {
   TUNNISTAMO_THEME: 'turku'
   STATIC_ROOT: '/fileshare/staticroot'
   MEDIA_ROOT: '/fileshare/mediaroot'
-  ALLOWED_HOSTS: (isDevelopment) ? '${apiInternalUrl},tunnistamo-test.turku.fi,testitunnistamo.turku.fi,127.0.0.1,localhost' : '${apiInternalUrl},tunnistamo.turku.fi,127.0.0.1,localhost'
+  ALLOWED_HOSTS: (isDevelopment) ? '${apiInternalUrl},tunnistamo.turku.fi,testitunnistamo.turku.fi,127.0.0.1,localhost' : '${apiInternalUrl},tunnistamo.turku.fi,127.0.0.1,localhost'
   CSRF_TRUSTED_ORIGINS: apiUrl
   USE_X_FORWARDED_HOST: true
   USE_X_FORWARDED_PORT: true

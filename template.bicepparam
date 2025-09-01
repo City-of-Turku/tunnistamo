@@ -3,9 +3,9 @@ using 'template.bicep'
 var prefix = readEnvironmentVariable('RESOURCE_PREFIX')
 var sanitizedPrefix = replace(prefix, '-', '')
 param isDevelopment = true
-param apiImageName = 'tunnistamo:test_july_8'
+param apiImageName = 'tunnistamo'
 param apiInternalUrl = '${prefix}-api.azurewebsites.net'
-param apiUrl = (isDevelopment) ? 'tunnistamo-testi.turku.fi' : 'tunnistamo.turku.fi'
+param apiUrl = (isDevelopment) ? 'testitunnistamo.turku.fi' : 'tunnistamo.turku.fi'
 param apiWebAppName = '${prefix}-api'
 param appInsightsName =  '${prefix}-appinsights'
 param cacheName =  '${prefix}-cache'
