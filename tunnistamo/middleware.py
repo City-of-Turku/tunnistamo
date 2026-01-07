@@ -14,6 +14,7 @@ from django.contrib.messages.api import MessageFailure
 from ipware import utils as ipware_utils
 from social_core.exceptions import SocialAuthBaseException
 from oidc_provider.lib.errors import BearerTokenError
+from django.contrib.auth import REDIRECT_FIELD_NAME
 
 from .exceptions import FriendlySocialAuthException
 
@@ -31,9 +32,11 @@ class InterruptedSocialAuthMiddleware:
     def get_redirect_uri(self, request, exception):
         strategy = request.social_strategy
         redirect_uri = reverse('login')
-        next = strategy.session.get('next')
-        if next and is_safe_url(url=next, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
-            redirect_uri += '?%s' % urlencode({next: next})
+        next_url = strategy.session.get('next')
+        if next_url and is_safe_url(
+            url=next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+        ):
+            redirect_uri += '?%s' % urlencode({REDIRECT_FIELD_NAME: next_url})
         return redirect_uri
 
     # Override raise_exception() to allow redirect also when debug is enabled
