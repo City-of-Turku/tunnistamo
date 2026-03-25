@@ -366,13 +366,20 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-11-01-pr
   ]
 }
 
+var dbStorage = isDevelopment ? {
+  iops: 120
+  tier: 'P4'
+  storageSizeGB: 32
+  autoGrow: 'Disabled'
+} : {
+  iops: 120
+  tier: 'P4'
+  storageSizeGB: 32
+  autoGrow: 'Disabled'
+}
+
 var dbProperties = {
-  storage: {
-    iops: 120
-    tier: 'P4'
-    storageSizeGB: 32
-    autoGrow: 'Disabled'
-  }
+  storage: dbStorage
   network: {
     publicNetworkAccess: 'Enabled'
   }
@@ -389,8 +396,10 @@ var dbProperties = {
   availabilityZone: '2'
 }
 
-var dbSku = {
-  // Must be above Burstable for replication
+var dbSku = isDevelopment ? {
+  name: 'Standard_B2s'
+  tier: 'Burstable'
+} : {
   name: 'Standard_D2ds_v5'
   tier: 'GeneralPurpose'
 }
@@ -522,16 +531,24 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2024-01-01' = {
   }
 }
 
+var serverfarmPlanSku = isDevelopment ? {
+  name: 'B2'
+  tier: 'Basic'
+  size: 'B2'
+  family: 'B'
+  capacity: 1
+} : {
+  name: 'P0v3'
+  tier: 'Premium0V3'
+  size: 'P0v3'
+  family: 'Pv3'
+  capacity: 1
+}
+
 resource serverfarmPlan 'Microsoft.Web/serverfarms@2023-12-01' = {
   name: serverfarmPlanName
   location: location
-  sku: {
-    name: 'P0v3'
-    tier: 'Premium0V3'
-    size: 'P0v3'
-    family: 'Pv3'
-    capacity: 1
-  }
+  sku: serverfarmPlanSku
   kind: 'linux'
   properties: {
     perSiteScaling: false
