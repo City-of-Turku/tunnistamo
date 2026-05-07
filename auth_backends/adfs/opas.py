@@ -1,11 +1,9 @@
 import base64
 import logging
-import json
 from datetime import datetime
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
-from django.core.cache import cache
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
@@ -23,7 +21,7 @@ class NoAssociatedOID(FriendlySocialAuthException):
 
 class OpasADFS(SAMLAuth):
     name = 'opas_adfs'
-    metadata_url = 'https://sts.edu.turku.fi/federationmetadata/2007-06/federationmetadata.xml'
+    metadata_file = 'certs/opas_adfs_metadata.xml'
     EXTRA_DATA = ['school_role']
 
     def generate_saml_config(self, idp=None):
@@ -50,24 +48,17 @@ class OpasADFS(SAMLAuth):
 
     @cached_property
     def remote_metadata(self):
-        """Load the IdP metadata from the remote server and cache it for future accesses"""
-        cache_key = '%s-idp-metadata' % self.name
-        cached_metadata = cache.get(cache_key)
-        if cached_metadata:
-            idp_config = json.loads(cached_metadata)
-        else:
-            idp_config = OneLogin_Saml2_IdPMetadataParser.parse_remote(self.metadata_url)
+        """Load the IdP metadata from a local file"""
+        with open(self.metadata_file) as f:
+            idp_config = OneLogin_Saml2_IdPMetadataParser.parse(f.read())
 
         idp = idp_config['idp']
         cert = self.find_valid_certificate(idp)
-        out = {
+        return {
             'entity_id': idp['entityId'],
             'url': idp['singleSignOnService']['url'],
             'x509cert': cert,
         }
-        cache.set(cache_key, json.dumps(idp_config), timeout=24 * 3600)
-
-        return out
 
     def get_idp(self, idp_name=None):
         if idp_name is None:
