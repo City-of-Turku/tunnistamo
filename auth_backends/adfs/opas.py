@@ -1,9 +1,11 @@
 import base64
 import logging
+import json
 from datetime import datetime
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
+from django.core.cache import cache
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
@@ -21,20 +23,26 @@ class NoAssociatedOID(FriendlySocialAuthException):
 
 class OpasADFS(SAMLAuth):
     name = 'opas_adfs'
-    metadata_file = 'certs/opas_adfs_metadata.xml'
+    metadata_url = 'https://login.microsoftonline.com/e59f7c03-5759-46b0-af27-7adce0770181/federationmetadata/2007-06/federationmetadata.xml?appid=70a6ef81-2c4d-4bc5-9f1e-7fd33f572630'
     EXTRA_DATA = ['school_role']
 
     def generate_saml_config(self, idp=None):
         ret = super().generate_saml_config(idp)
         ret['security']['wantAssertionsSigned'] = True
         ret['security']['wantNameId'] = False
+        ret['security']['requestedAuthnContext'] = False
         return ret
 
     def find_valid_certificate(self, idp):
         now = datetime.utcnow()
         # Find the first valid certificate based on the certificate
-        # validity timestamps.
-        for cert_b64 in idp['x509certMulti']['signing']:
+        # validity timestamps. Metadata may provide multiple certs via
+        # 'x509certMulti' or a single cert via 'x509cert'.
+        if 'x509certMulti' in idp:
+            certs = idp['x509certMulti'].get('signing') or idp['x509certMulti'].get('encryption', [])
+        else:
+            certs = [idp['x509cert']]
+        for cert_b64 in certs:
             cert_buf = base64.b64decode(cert_b64)
             cert = x509.load_der_x509_certificate(cert_buf, default_backend())
             if now > cert.not_valid_after:
@@ -48,17 +56,24 @@ class OpasADFS(SAMLAuth):
 
     @cached_property
     def remote_metadata(self):
-        """Load the IdP metadata from a local file"""
-        with open(self.metadata_file) as f:
-            idp_config = OneLogin_Saml2_IdPMetadataParser.parse(f.read())
+        """Load the IdP metadata from the remote server and cache it for future accesses"""
+        cache_key = '%s-idp-metadata' % self.name
+        cached_metadata = cache.get(cache_key)
+        if cached_metadata:
+            idp_config = json.loads(cached_metadata)
+        else:
+            idp_config = OneLogin_Saml2_IdPMetadataParser.parse_remote(self.metadata_url)
 
         idp = idp_config['idp']
         cert = self.find_valid_certificate(idp)
-        return {
+        out = {
             'entity_id': idp['entityId'],
             'url': idp['singleSignOnService']['url'],
             'x509cert': cert,
         }
+        cache.set(cache_key, json.dumps(idp_config), timeout=24 * 3600)
+
+        return out
 
     def get_idp(self, idp_name=None):
         if idp_name is None:
