@@ -23,20 +23,26 @@ class NoAssociatedOID(FriendlySocialAuthException):
 
 class OpasADFS(SAMLAuth):
     name = 'opas_adfs'
-    metadata_url = 'https://sts.edu.turku.fi/federationmetadata/2007-06/federationmetadata.xml'
+    metadata_url = 'https://login.microsoftonline.com/e59f7c03-5759-46b0-af27-7adce0770181/federationmetadata/2007-06/federationmetadata.xml?appid=70a6ef81-2c4d-4bc5-9f1e-7fd33f572630'
     EXTRA_DATA = ['school_role']
 
     def generate_saml_config(self, idp=None):
         ret = super().generate_saml_config(idp)
         ret['security']['wantAssertionsSigned'] = True
         ret['security']['wantNameId'] = False
+        ret['security']['requestedAuthnContext'] = False
         return ret
 
     def find_valid_certificate(self, idp):
         now = datetime.utcnow()
         # Find the first valid certificate based on the certificate
-        # validity timestamps.
-        for cert_b64 in idp['x509certMulti']['signing']:
+        # validity timestamps. Metadata may provide multiple certs via
+        # 'x509certMulti' or a single cert via 'x509cert'.
+        if 'x509certMulti' in idp:
+            certs = idp['x509certMulti'].get('signing') or idp['x509certMulti'].get('encryption', [])
+        else:
+            certs = [idp['x509cert']]
+        for cert_b64 in certs:
             cert_buf = base64.b64decode(cert_b64)
             cert = x509.load_der_x509_certificate(cert_buf, default_backend())
             if now > cert.not_valid_after:
