@@ -1,7 +1,7 @@
 import base64
 import logging
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -10,8 +10,9 @@ from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
 from social_core.backends.saml import SAMLAuth, SAMLIdentityProvider
+from social_core.exceptions import AuthMissingParameter
 
-from tunnistamo.exceptions import FriendlySocialAuthException
+from tunnistamo.exceptions import AuthBackendUnavailable, FriendlySocialAuthException
 
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ class OpasADFS(SAMLAuth):
         return ret
 
     def find_valid_certificate(self, idp):
-        now = datetime.utcnow()
+        now = datetime.now(tz=timezone.utc)
         # Find the first valid certificate based on the certificate
         # validity timestamps. Metadata may provide multiple certs via
         # 'x509certMulti' or a single cert via 'x509cert'.
@@ -45,33 +46,43 @@ class OpasADFS(SAMLAuth):
         for cert_b64 in certs:
             cert_buf = base64.b64decode(cert_b64)
             cert = x509.load_der_x509_certificate(cert_buf, default_backend())
-            if now > cert.not_valid_after:
+            not_after = getattr(cert, 'not_valid_after_utc', None) or \
+                cert.not_valid_after.replace(tzinfo=timezone.utc)
+            not_before = getattr(cert, 'not_valid_before_utc', None) or \
+                cert.not_valid_before.replace(tzinfo=timezone.utc)
+            if now > not_after:
                 continue
-            if now < cert.not_valid_before:
+            if now < not_before:
                 continue
             break
         else:
-            raise Exception('No valid X.509 certificates found in SAML2 metadata')
+            raise AuthBackendUnavailable('No valid X.509 certificates found in SAML2 metadata')
         return cert_b64
 
     @cached_property
     def remote_metadata(self):
         """Load the IdP metadata from the remote server and cache it for future accesses"""
         cache_key = '%s-idp-metadata' % self.name
-        cached_metadata = cache.get(cache_key)
-        if cached_metadata:
-            idp_config = json.loads(cached_metadata)
-        else:
-            idp_config = OneLogin_Saml2_IdPMetadataParser.parse_remote(self.metadata_url)
+        try:
+            cached_metadata = cache.get(cache_key)
+            if cached_metadata:
+                idp_config = json.loads(cached_metadata)
+            else:
+                idp_config = OneLogin_Saml2_IdPMetadataParser.parse_remote(self.metadata_url)
 
-        idp = idp_config['idp']
-        cert = self.find_valid_certificate(idp)
-        out = {
-            'entity_id': idp['entityId'],
-            'url': idp['singleSignOnService']['url'],
-            'x509cert': cert,
-        }
-        cache.set(cache_key, json.dumps(idp_config), timeout=24 * 3600)
+            idp = idp_config['idp']
+            cert = self.find_valid_certificate(idp)
+            out = {
+                'entity_id': idp['entityId'],
+                'url': idp['singleSignOnService']['url'],
+                'x509cert': cert,
+            }
+            cache.set(cache_key, json.dumps(idp_config), timeout=24 * 3600)
+        except AuthBackendUnavailable:
+            raise
+        except Exception as e:
+            logger.error('Failed to load OPAS ADFS metadata: %s', e, exc_info=True)
+            raise AuthBackendUnavailable()
 
         return out
 
@@ -95,6 +106,11 @@ class OpasADFS(SAMLAuth):
         idp_config['attr_role'] = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
 
         return SAMLIdentityProvider(idp_name, **idp_config)
+
+    def auth_complete(self, *args, **kwargs):
+        if 'RelayState' not in self.strategy.request_data():
+            raise AuthMissingParameter(self, 'RelayState')
+        return super().auth_complete(*args, **kwargs)
 
     def get_allowed_idp_name(self, request):
         return self.name
