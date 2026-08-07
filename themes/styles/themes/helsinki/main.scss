@@ -1,7 +1,7 @@
 @import "../../bootstrap-pre";
 
 // Import city specific bootstrap variable overrides:
-@import "~open-city-design/src/scss/helsinki/variables";
+@import "open-city-design/src/scss/helsinki/variables";
 
 $brand-light:  $hel-fog;
 $brand-dark:   $hel-bus;
@@ -11,7 +11,7 @@ $logo-url:     "/static/open-city-design/src/assets/helsinki-logo-black.svg";
 @import "../../bootstrap-post";
 
 // Import city specific style overrides.
-@import "~open-city-design/src/scss/helsinki/mixins";
-@import "~open-city-design/src/scss/helsinki/custom-styles";
+@import "open-city-design/src/scss/helsinki/mixins";
+@import "open-city-design/src/scss/helsinki/custom-styles";
 
 @import "../../common";

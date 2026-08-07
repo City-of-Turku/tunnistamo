@@ -1,11 +1,8 @@
 import pytest
-from httpretty import httpretty as httpretty_class
+import responses
 
 
-@pytest.fixture()
+@pytest.fixture
 def httpretty():
-    httpretty_class.reset()
-    httpretty_class.enable()
-    httpretty_class.allow_net_connect = False
-    yield httpretty_class
-    httpretty_class.disable()
+    with responses.RequestsMock() as rsps:
+        yield rsps

@@ -2,6 +2,7 @@ import json
 from urllib.parse import parse_qs, urlparse
 
 import pytest
+import responses
 from django.conf import settings
 from django.urls import reverse
 from freezegun import freeze_time
@@ -46,14 +47,15 @@ tOXZmDzg
 
 @pytest.mark.django_db
 @freeze_time('2017-12-15 12:25:55', tz_offset=2)
-def test_login_and_ad_groups(client, httpretty):
+def test_login_and_ad_groups(client, httpretty, monkeypatch):
+    monkeypatch.setattr(HelsinkiADFS, 'LEEWAY', 999999999)
     access_token_body = json.dumps({
         'access_token': ACCESS_TOKEN,
         'expires_in': 600,
         'refresh_token': 'dummy_refresh_token',
         'token_type': 'bearer'
     })
-    httpretty.register_uri(httpretty.POST, 'https://fs.hel.fi/adfs/oauth2/token', body=access_token_body)
+    httpretty.add(responses.POST, 'https://fs.hel.fi/adfs/oauth2/token', body=access_token_body)
 
     # Make a request to the begin view to get the return url
     login_start_url = reverse('social:begin', kwargs={
@@ -89,7 +91,7 @@ def test_login_invalid_cert(client, httpretty, monkeypatch):
         'refresh_token': 'dummy_refresh_token',
         'token_type': 'bearer'
     })
-    httpretty.register_uri(httpretty.POST, 'https://fs.hel.fi/adfs/oauth2/token', body=access_token_body)
+    httpretty.add(responses.POST, 'https://fs.hel.fi/adfs/oauth2/token', body=access_token_body)
 
     # Make a request to the begin view to get the return url
     login_start_url = reverse('social:begin', kwargs={

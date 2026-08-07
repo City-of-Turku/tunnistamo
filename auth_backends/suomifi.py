@@ -1,6 +1,8 @@
 import json
 import logging
 
+from urllib.parse import parse_qs, urlparse
+
 from defusedxml.lxml import fromstring, tostring
 from django.urls import reverse
 from lxml import etree
@@ -156,13 +158,36 @@ class SuomiFiSAMLAuth(SAMLAuth):
         return False
 
     def get_allowed_idp_name(self, request):
+        from users.models import OidcClientOptions
+
+        next_url = request.GET.get('next', '')
+        if not next_url:
+            return None
+
+        client_id = parse_qs(urlparse(next_url).query).get('client_id', [None])[0]
+        if not client_id:
+            return None
+
+        try:
+            oidc_client = Client.objects.get(client_id=client_id)
+            client_options = OidcClientOptions.objects.get(oidc_client=oidc_client)
+        except (Client.DoesNotExist, OidcClientOptions.DoesNotExist):
+            return None
+
+        if not client_options.login_methods.filter(provider_id=self.name).exists():
+            return None
+
+        scopes = oidc_client.scope or []
+        if not any(scope.startswith('suomifi_') for scope in scopes):
+            return None
+
         return self.name
 
     def get_idp(self, idp_name):
         """Given the name of an IdP, get a SuomiFiSAMLIdentityProvider instance.
         Overrides the base class method."""
         idp_config = self.setting('ENABLED_IDPS')[idp_name]
-        return SuomiFiSAMLIdentityProvider(idp_name, **idp_config)
+        return SuomiFiSAMLIdentityProvider(self, idp_name, **idp_config)
 
     def generate_saml_config(self, idp=None):
         """Generate the configuration required to instantiate OneLogin_Saml2_Auth.
@@ -291,10 +316,10 @@ class SuomiFiSAMLAuth(SAMLAuth):
         url += '&LG=fi'
         return url
 
-    def extra_data(self, user, uid, response, details=None, *args, **kwargs):
+    def extra_data(self, user, uid, response, details, pipeline_kwargs):
         """Return default extra data to store in extra_data field.
         Extends the base class method by including session index to extra_data."""
-        data = super().extra_data(user, uid, response, details=details, *args, **kwargs)
+        data = super().extra_data(user, uid, response, details, pipeline_kwargs)
         data['session_index'] = response.get('session_index')
         data['suomifi_attributes'] = self._extract_suomifi_attributes(response)
         return data
@@ -321,16 +346,20 @@ class SuomiFiSAMLAuth(SAMLAuth):
             logger.info('Invalid return token: {}'.format(token))
             return None, None
 
-    def create_logout_redirect(self, social_user, token=''):
+    def create_logout_redirect(self, social_user, token=None):
         """Returns a SP initiated SLO redirect message for given user.
         Token is used for tracking state."""
         idp = self.get_idp('suomifi')
         auth = self._create_saml_auth(idp=idp)
-        redirect = auth.logout(return_to=token,
-                               nq=idp.entity_id,
-                               name_id=social_user.extra_data['name_id'],
-                               name_id_format='urn:oasis:names:tc:SAML:2.0:nameid-format:transient',
-                               session_index=social_user.extra_data['session_index'])
+        logout_kwargs = {
+            'nq': idp.entity_id,
+            'name_id': social_user.extra_data['name_id'],
+            'name_id_format': 'urn:oasis:names:tc:SAML:2.0:nameid-format:transient',
+            'session_index': social_user.extra_data['session_index'],
+        }
+        if token:
+            logout_kwargs['return_to'] = token
+        redirect = auth.logout(**logout_kwargs)
         social_user.extra_data = {}
         social_user.save()
         return self.strategy.redirect(redirect)
@@ -357,22 +386,24 @@ class SuomiFiSAMLAuth(SAMLAuth):
         after succesful Suomi.fi logout.
         """
         request = self.strategy.request
+        client_id = None
+        relay_token = None
         id_token_hint = request.GET.get('id_token_hint')
         if id_token_hint:
             client_id = client_id_from_id_token(id_token_hint)
             try:
                 client = Client.objects.get(client_id=client_id)
                 if redirect_uri in client.post_logout_redirect_uris:
-                    token = self.create_return_token(
+                    relay_token = self.create_return_token(
                         client_id,
                         client.post_logout_redirect_uris.index(redirect_uri))
             except Client.DoesNotExist:
                 pass
 
-        response = self.create_logout_redirect(social_user, token)
+        response = self.create_logout_redirect(social_user, relay_token)
 
-        for token in Token.objects.filter(user=social_user.user):
-            if client_id and token.id_token.get('aud') == client_id:
-                token.delete()
+        for oidc_token in Token.objects.filter(user=social_user.user):
+            if client_id and oidc_token.id_token and oidc_token.id_token.get('aud') == client_id:
+                oidc_token.delete()
 
         return response

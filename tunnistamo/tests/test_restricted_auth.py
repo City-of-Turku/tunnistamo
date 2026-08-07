@@ -26,7 +26,7 @@ RESTRICTED_AUTH_BACKEND = settings.RESTRICTED_AUTHENTICATION_BACKENDS[0]
 @pytest.fixture
 def django_client(request):
     from django.test.client import Client
-    return Client(SERVER_NAME=SERVER_NAME)
+    return Client(HTTP_HOST=SERVER_NAME)
 
 
 def create_oidc_client(response_type):
@@ -71,10 +71,16 @@ def create_oidc_code(user, oidc_client):
 
 
 def create_rsa_key():
-    from Cryptodome.PublicKey import RSA
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
     from oidc_provider.models import RSAKey
-    key = RSA.generate(2048)
-    rsakey = RSAKey.objects.create(key=key.exportKey('PEM').decode('utf8'))
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    ).decode('utf8')
+    rsakey = RSAKey.objects.create(key=pem)
     return rsakey
 
 
@@ -107,12 +113,14 @@ def test_restricted_auth_omit_refresh_token(django_client, django_user_model):
 @pytest.mark.parametrize('tick_minutes,allow_access', [(59, True), (61, False)])
 def test_restricted_auth_timeout(django_client, django_user_model, tick_minutes, allow_access):
     with freeze_time('2019-01-01 12:00:00', tz_offset=2) as timer:
-        oidc_client = create_oidc_client('id_token token')
+        oidc_client = create_oidc_client('code')
         user = create_user(django_user_model)
         give_oidc_userconsent(user, oidc_client)
         create_rsa_key()
 
-        django_client.login(username=TEST_USER, password=TEST_PASSWORD)
+        django_client.force_login(user)
+        user.last_login = timezone.now()
+        user.save(update_fields=['last_login'])
         session = django_client.session
         session['_auth_user_backend'] = RESTRICTED_AUTH_BACKEND
         session.save()
@@ -136,8 +144,12 @@ def test_restricted_auth_timeout(django_client, django_user_model, tick_minutes,
 
         if allow_access:
             assert redirect_url.netloc != ''
-            assert 'access_token' in redirect_params
+            assert 'code' in redirect_params
 
         else:
-            assert redirect_url.netloc == ''
-            assert 'redirect_uri' in redirect_params
+            if redirect_url.path == '/openid/authorize':
+                auth_response = django_client.get(auth_response['Location'])
+                redirect_url = urlparse(auth_response['location'].replace('#', '?'))
+                redirect_params = parse_qs(redirect_url.query)
+            assert redirect_url.path == '/login/'
+            assert 'next' in redirect_params

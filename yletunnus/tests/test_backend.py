@@ -2,10 +2,8 @@ import datetime
 import json
 from calendar import timegm
 
-from httpretty import HTTPretty
-from jwkest.jwk import SYMKey
-from jwkest.jws import JWS
-from jwkest.jwt import b64encode_item
+import jwt
+import responses
 from social_core.tests.backends.oauth import OAuth2Test
 
 
@@ -24,24 +22,13 @@ class YleTunnusOAuth2Test(OAuth2Test):
     def extra_settings(self):
         settings = super().extra_settings()
         settings.update({
+            'SOCIAL_AUTH_{0}_KEY'.format(self.name): self.app_id,
             'SOCIAL_AUTH_{0}_APP_ID'.format(self.name): self.app_id,
             'SOCIAL_AUTH_{0}_APP_KEY'.format(self.name): self.app_key,
             'SOCIAL_AUTH_{0}_SECRET'.format(self.name): self.client_secret,
             'SOCIAL_AUTH_{0}_JWT_SECRET'.format(self.name): self.jwt_secret,
         })
         return settings
-
-    def access_token_body(self, request, _url, headers):
-        """
-        Get the nonce from the request parameters, add it to the id_token, and
-        return the complete response.
-        """
-        qs = request.querystring
-        assert qs.get('app_id')[0] == self.app_id
-        assert qs.get('app_key')[0] == self.app_key
-
-        body = self.prepare_access_token_body()
-        return 200, headers, body
 
     def get_id_token(self, client_key=None, expiration_datetime=None,
                      issue_datetime=None):
@@ -58,11 +45,9 @@ class YleTunnusOAuth2Test(OAuth2Test):
             'scopes': 'sub email'
         }
 
-    def prepare_access_token_body(self, client_key=None, tamper_message=False,
-                                  expiration_datetime=None,
-                                  issue_datetime=None, nonce=None,
-                                  issuer=None):
-        body = {'access_token': 'foobar', 'token_type': 'bearer'}
+    def build_access_token_body(self, client_key=None, tamper_message=False,
+                                expiration_datetime=None,
+                                issue_datetime=None):
         client_key = client_key or self.client_key
         now = datetime.datetime.utcnow()
         expiration_datetime = expiration_datetime or (now + datetime.timedelta(seconds=30))
@@ -72,28 +57,37 @@ class YleTunnusOAuth2Test(OAuth2Test):
             timegm(issue_datetime.utctimetuple())
         )
 
-        key = SYMKey(key=self.jwt_secret, alg='HS256')
-        body['access_token'] = JWS(id_token, jwk=key, alg='HS256').sign_compact()
+        body = {'access_token': jwt.encode(id_token, self.jwt_secret, algorithm='HS256'),
+                'token_type': 'bearer'}
         if tamper_message:
-            header, msg, sig = body['id_token'].split('.')
             id_token['sub'] = '1235'
-            msg = b64encode_item(id_token).decode('utf-8')
-            body['access_token'] = '.'.join([header, msg, sig])
+            body['access_token'] = jwt.encode(id_token, self.jwt_secret, algorithm='HS256')
 
         return json.dumps(body)
 
-    def authorize_body(self, request, url, headers):
-        headers['location'] = self.complete_url
-        qs = request.querystring
-        assert qs.get('app_id')[0] == self.client_key
-        assert set(qs.get('scope')[0].split(' ')) == set(['sub', 'email'])
-        return 301, headers, ''
-
     def auth_handlers(self, start_url):
-        target_url = super().auth_handlers(start_url)
+        target_url = self.handle_state(
+            start_url, self.strategy.build_absolute_uri(self.complete_url)
+        )
         self.complete_url = target_url
-        HTTPretty.register_uri(HTTPretty.GET, start_url, body=self.authorize_body)
+
+        responses.add(
+            responses.GET,
+            start_url,
+            status=301,
+            headers={'Location': target_url},
+        )
+        responses.add(responses.GET, target_url, status=200, body="foobar")
         return target_url
+
+    def pre_complete_callback(self, start_url):
+        responses.add(
+            self._method(self.backend.ACCESS_TOKEN_METHOD),
+            url=self.backend.access_token_url(),
+            status=200,
+            body=self.build_access_token_body(),
+            content_type="application/json",
+        )
 
     def test_login(self):
         self.strategy.set_settings({

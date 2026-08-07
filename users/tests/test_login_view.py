@@ -1,7 +1,7 @@
 import pytest
 from django.urls import reverse
 from django.utils.crypto import get_random_string
-from django.utils.http import urlquote
+from urllib.parse import quote as urlquote, urlencode
 
 
 @pytest.mark.django_db
@@ -20,10 +20,10 @@ def test_login_view_next_url(client, assertCountEqual, loginmethod_factory, appl
 
     assert facebook_login_url == reverse('social:begin', kwargs={
         'backend': 'facebook'
-    }) + '?next=http%3A//example.com/'
+    }) + '?' + urlencode({'next': params['next']})
     assert github_login_url == reverse('social:begin', kwargs={
         'backend': 'github'
-    }) + '?next=http%3A//example.com/'
+    }) + '?' + urlencode({'next': params['next']})
 
 
 @pytest.mark.django_db
@@ -53,15 +53,15 @@ def test_login_view_ignore_unknown_app(client, loginmethod_factory, application_
     loginmethod_factory(provider_id='facebook')
 
     params = {
-        "next": "http://example.com/?client_id={}".format(get_random_string()),
+        "next": "http://example.com/?client_id={}".format(get_random_string(12)),
     }
 
     response = client.get('/login/', params)
 
     assert response.status_code == 302
-    assert response['location'] == '{}?next={}'.format(reverse('social:begin', kwargs={
+    assert response['location'] == '{}?{}'.format(reverse('social:begin', kwargs={
         'backend': 'facebook'
-    }), urlquote(params['next']))
+    }), urlencode({'next': params['next']}))
 
 
 @pytest.mark.django_db
@@ -83,9 +83,9 @@ def test_login_view_loginmethods_per_app(client, loginmethod_factory, applicatio
     response = client.get('/login/', params)
 
     assert response.status_code == 302
-    assert response['location'] == '{}?next={}'.format(reverse('social:begin', kwargs={
+    assert response['location'] == '{}?{}'.format(reverse('social:begin', kwargs={
         'backend': 'github'
-    }), urlquote(params['next']))
+    }), urlencode({'next': params['next']}))
 
 
 @pytest.mark.django_db

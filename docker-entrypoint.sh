@@ -2,6 +2,10 @@
 
 set -e
 
+# Azure PostgreSQL with libpq 15+ requires sslmode and a dummy cert path
+export PGSSLCERT="${PGSSLCERT:-/tmp/postgresql.crt}"
+export HOME="${HOME:-/tmp}"
+
 # settings.py reads the following files. We use Key Vault import to store the certificate securely and use WEBSITE_LOAD_CERTIFICATES environment variable to tell Azure Web App to load the certificate from Key Vault and mount it to /var/ssl/private/(thumbprint).p12. We then split the certificate back into a .key and .crt pair here.
 mkdir -p /app/certs
 openssl pkcs12 -in /var/ssl/private/$TURKU_ADFS_CERTIFICATE_THUMBPRINT.p12 -nocerts -out /app/certs/turku_adfs.key -nodes -passin pass:

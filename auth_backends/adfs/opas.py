@@ -7,7 +7,7 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from django.core.cache import cache
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
 from social_core.backends.saml import SAMLAuth, SAMLIdentityProvider
 from social_core.exceptions import AuthMissingParameter
@@ -105,7 +105,7 @@ class OpasADFS(SAMLAuth):
         idp_config['attr_last_name'] = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'
         idp_config['attr_role'] = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
 
-        return SAMLIdentityProvider(idp_name, **idp_config)
+        return SAMLIdentityProvider(self, idp_name, **idp_config)
 
     def auth_complete(self, *args, **kwargs):
         if 'RelayState' not in self.strategy.request_data():

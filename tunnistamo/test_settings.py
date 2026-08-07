@@ -1,6 +1,19 @@
 from .settings import *
 
-ALLOWED_HOSTS = '*'
+ALLOWED_HOSTS = ['*']
+
+# Restricted-auth timeout tests advance time beyond the production session limit.
+SESSION_COOKIE_AGE = 2 * 60 * 60
+
+# Volume-mounted dev/test containers store node_modules outside /app.
+NODE_MODULES_PATH = '/var/tunnistamo/node_modules'
+COMPRESS_ENABLED = False
+COMPRESS_PRECOMPILERS = ()
+
+OAUTH2_PROVIDER = {
+    **OAUTH2_PROVIDER,
+    'PKCE_REQUIRED': False,
+}
 
 ###
 # Suomi.fi test configuration
@@ -68,7 +81,7 @@ SOCIAL_AUTH_SUOMIFI_ENABLED_IDPS['suomifi'] = {
     'attr_first_name': 'http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName',
     'attr_last_name': 'urn:oid:2.5.4.4',
     'attr_username': 'urn:oid:1.2.246.21',
-    'attr_email': 'urn:oid:0.9.2342.19200300.100.1.3',
+    'attr_email': None,
 }
 SOCIAL_AUTH_SUOMIFI_ORG_INFO = {
     'en': {

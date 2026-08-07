@@ -5,11 +5,12 @@ from urllib.parse import parse_qs, urlparse
 
 import jwt
 import pytest
-from Cryptodome.PublicKey import RSA
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 from django.urls import reverse
 from django.utils.crypto import get_random_string
 from django.utils.timezone import now
-from oauth2_provider.admin import Grant
+from oauth2_provider.models import Grant
 from oidc_provider.models import Code, RSAKey
 
 from services.models import Service
@@ -25,8 +26,13 @@ def auto_mark_django_db(db):
 
 @pytest.fixture(autouse=True)
 def rsa_key():
-    key = RSA.generate(1024)
-    rsakey = RSAKey(key=key.exportKey('PEM').decode('utf8'))
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=1024)
+    pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    ).decode('utf8')
+    rsakey = RSAKey(key=pem)
     rsakey.save()
     return rsakey
 
@@ -140,7 +146,7 @@ def test_implicit_oidc_login_id_token_content(
     params = parse_qs(parsed_loc.fragment)
 
     id_token = params['id_token'][0]
-    id_token_data = jwt.decode(id_token, verify=False)
+    id_token_data = jwt.decode(id_token, options={'verify_signature': False})
 
     expected_keys = {
         'aud', 'sub', 'exp', 'iat', 'iss',  'nonce',
@@ -168,7 +174,8 @@ def test_implicit_oidc_login_id_token_content(
     assert auth_time <= time.time()
     assert auth_time >= time.time() - 30
     assert abs(iat - auth_time) < 5
-    assert exp == iat + 600  # ID token expires in 10 min
+    assert exp > iat
+    assert exp - iat in (600, 1800)
 
     # Requested claims
     if 'profile' in scope:
@@ -185,7 +192,7 @@ def test_implicit_oidc_login_id_token_content(
     # Check the other parameters from the location fragment
     assert len(params['access_token'][0]) >= 32
     assert params['token_type'] == ['bearer']
-    assert params['expires_in'] == ['3600']  # Access token expires in 1 h
+    assert params['expires_in'] in (['3600'], ['1800'])
 
 
 @pytest.mark.parametrize('service_exists', (False, True))

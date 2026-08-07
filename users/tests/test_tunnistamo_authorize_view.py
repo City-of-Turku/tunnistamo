@@ -15,12 +15,12 @@ def test_tunnistamo_authorize_view_is_used(client, with_trailing_slash):
 
 
 @pytest.mark.parametrize('ui_locales, expected_text', (
-    (None, 'Sähköposti'),
-    ('', 'Sähköposti'),
-    ('bogus', 'Sähköposti'),
-    ('en', 'Email'),
-    ('fi en', 'Sähköposti'),
-    ('bogus      en fi', 'Email'),
+    (None, 'Sähköpostiosoite'),
+    ('', 'Sähköpostiosoite'),
+    ('bogus', 'Sähköpostiosoite'),
+    ('en', 'Email address'),
+    ('fi en', 'Sähköpostiosoite'),
+    ('bogus      en fi', 'Email address'),
 ))
 @pytest.mark.django_db
 def test_tunnistamo_authorize_view_language(client, ui_locales, expected_text):
@@ -62,6 +62,7 @@ def test_api_scopes_are_shown_in_and_returned_from_consent_screen(client):
     content = response.content.decode('utf-8')
     expected_scope = '{} github_username'.format(api_scope.identifier)
     assert '<input name="scope" type="hidden" value="{}" />'.format(expected_scope) in content
+    api_scope.set_current_language('fi')
     assert api_scope.name in content
     assert api_scope.description in content
 

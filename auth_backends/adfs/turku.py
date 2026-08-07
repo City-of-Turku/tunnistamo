@@ -7,7 +7,7 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from django.core.cache import cache
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
 from social_core.backends.saml import SAMLAuth, SAMLIdentityProvider
 
@@ -111,7 +111,7 @@ class TurkuADFS(SAMLAuth):
         idp_config['attr_first_name'] = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'
         idp_config['attr_last_name'] = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'
 
-        return SAMLIdentityProvider(idp_name, **idp_config)
+        return SAMLIdentityProvider(self, idp_name, **idp_config)
 
     def get_allowed_idp_name(self, request):
         return self.name

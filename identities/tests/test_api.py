@@ -215,7 +215,7 @@ def test_post_user_identity(validate_patron, user_api_client, post_data):
 def test_post_user_identity_interface_device(validate_patron, interface_device_api_client, post_data):
     response = interface_device_api_client.post(list_url, post_data)
     assert response.status_code == 403
-    validate_patron.not_called()
+    validate_patron.assert_not_called()
     assert UserIdentity.objects.count() == 0
 
 
@@ -225,7 +225,7 @@ def test_post_user_identity_check_required_fields(validate_patron, user_api_clie
     response = user_api_client.post(list_url, {})
     assert response.status_code == 400
     assert set(response.data) == {'service', 'identifier', 'secret'}
-    assert validate_patron.not_called()
+    validate_patron.assert_not_called()
 
 
 @pytest.mark.django_db
@@ -237,7 +237,7 @@ def test_post_user_identity_invalid_service(validate_patron, user_api_client, po
     assert response.status_code == 400
     assert len(response.data) == 1
     assert response.data['service']
-    assert validate_patron.not_called()
+    validate_patron.assert_not_called()
 
 
 @pytest.mark.django_db

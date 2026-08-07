@@ -5,7 +5,7 @@ from django.utils.crypto import get_random_string
 
 @pytest.mark.django_db
 def test_logout(client, user_factory):
-    password = get_random_string()
+    password = get_random_string(12)
     user = user_factory(password=password)
 
     client.login(username=user.username, password=password)
@@ -40,7 +40,7 @@ def test_logout_redirect_next(client, user_factory, next, expected, application_
 @pytest.mark.parametrize('next', (
     None,
     '',
-    get_random_string(),
+    get_random_string(12),
     12345,
     '//example.com',
     '/foo',
@@ -51,9 +51,10 @@ def test_logout_redirect_next(client, user_factory, next, expected, application_
 ))
 @pytest.mark.django_db
 def test_logout_no_redirect_on_invalid_next(client, user_factory, next):
-    response = client.get('/logout/', {
-        'next': next,
-    })
+    params = {}
+    if next is not None:
+        params['next'] = next
+    response = client.get('/logout/', params)
 
     assert response.status_code == 200
 
@@ -63,7 +64,7 @@ def test_logout_redirect_next_authenticated(client, user_factory, application_fa
     app = application_factory(post_logout_redirect_uris='http://example.com/', redirect_uris=['http://example.com/'])
     app.save()
 
-    password = get_random_string()
+    password = get_random_string(12)
     user = user_factory(password=password)
 
     client.login(username=user.username, password=password)

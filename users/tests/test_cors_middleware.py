@@ -134,4 +134,4 @@ def test_cors_headers_got_with_whitelisted_uris_apiendpoints(
     assert_cors_not_found('http://examplez.com', get_response('http://examplez.com'))
 
     for origin in get_origins(0, len(urls)):
-        assert_cors_not_found(origin, get_response('origin'))
+        assert_cors_not_found(origin, get_response(origin))
