@@ -23,7 +23,7 @@ django-crequest
 django-ipware
 geoip2
 django-filter
-python3-saml>=1.16
+python3-saml>=1.16  # Docker/CI: build lxml+xmlsec from source (PIP_NO_BINARY) for libxml2 match
 ruamel.yaml
 pytz
 django-translation-checker @ git+https://github.com/City-of-Helsinki/django-translation-checker.git@master

@@ -7,6 +7,7 @@ FROM python:3.12-slim-bookworm AS staticbuilder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       libxmlsec1-dev \
+      libxmlsec1-openssl \
       libxml2-dev \
       libxslt-dev \
       zlib1g-dev \
@@ -26,6 +27,7 @@ COPY requirements-prod.txt /app/requirements-prod.txt
 COPY requirements-prod-turku.txt /app/requirements-prod-turku.txt
 COPY package.json /app/package.json
 
+ENV PIP_NO_BINARY=lxml,xmlsec
 RUN pip install -U pip setuptools wheel \
     && pip install --no-cache-dir -r /app/requirements.txt
 RUN npm install
@@ -56,6 +58,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       gettext \
       git \
       libxmlsec1-dev \
+      libxmlsec1-openssl \
       libxml2-dev \
       libxslt-dev \
       zlib1g-dev \
@@ -76,6 +79,7 @@ COPY --chown=appuser:appuser requirements.txt /app/requirements.txt
 COPY --chown=appuser:appuser requirements-prod.txt /app/requirements-prod.txt
 COPY --chown=appuser:appuser requirements-prod-turku.txt /app/requirements-prod-turku.txt
 
+ENV PIP_NO_BINARY=lxml,xmlsec
 RUN pip install -U pip setuptools wheel \
     && pip install --no-cache-dir -r /app/requirements.txt \
     && UWSGI_PROFILE_OVERRIDE="ssl=false" pip install --no-cache-dir -r /app/requirements-prod.txt \

@@ -9,7 +9,7 @@ cache: pip
 before_install:
   - pip install -U pip
 
-install: 'pip install codecov -r requirements.txt -r requirements-dev.txt'
+install: 'PIP_NO_BINARY=lxml,xmlsec pip install codecov -r requirements.txt -r requirements-dev.txt'
 
 script:
   - flake8
