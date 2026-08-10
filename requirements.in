@@ -15,7 +15,7 @@ django-compressor
 django-inline-svg
 django-environ
 social-auth-core[openidconnect,saml]>=4.4
-social-auth-app-django>=5.4
+social-auth-app-django>=5.4,<5.6
 requests
 jwcrypto
 Pillow
