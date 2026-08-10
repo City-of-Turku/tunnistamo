@@ -32,8 +32,11 @@ UNSAFE = ['DELETE', 'PATCH', 'POST', 'PUT']
 EXPIRATION_FUDGE = 5
 
 ratelimit_cache = caches[getattr(settings, 'RATELIMIT_USE_CACHE', 'default')]
-if isinstance(ratelimit_cache, LocMemCache):
-    raise ImproperlyConfigured('Ratelimit cache backend must not be LocMemCache')
+
+
+def _ensure_ratelimit_cache():
+    if isinstance(ratelimit_cache, LocMemCache):
+        raise ImproperlyConfigured('Ratelimit cache backend must not be LocMemCache')
 
 
 def ip_mask(ip):
@@ -141,6 +144,8 @@ def get_usage(request, group=None, fn=None, key=None, rate=None, method=ALL,
 
     if not getattr(settings, 'RATELIMIT_ENABLE', True):
         return None
+
+    _ensure_ratelimit_cache()
 
     if not _method_match(request, method):
         return None
