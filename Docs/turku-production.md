@@ -24,6 +24,10 @@ python manage.py migrate --noinput
 If `migrate` fails on another already-existing Application column, fake that specific
 `oauth2_provider` migration and re-run `migrate`.
 
+`users.0026_add_oauth2_application_fields` adds django-oauth-toolkit 3.x columns on
+`users_application` (required because the swapped Application model is not always
+updated by `oauth2_provider` migrations).
+
 If you previously hit `InconsistentMigrationHistory` for `users.0020_populate_cors_allowed_origins`,
 deploy the fixed migration files first, then run the commands above.
 
