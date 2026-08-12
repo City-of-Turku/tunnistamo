@@ -16,7 +16,7 @@ def _noop(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0024_add_oauth2_application_fields'),
+        ('users', '0019_allowedorigin'),
     ]
 
     operations = [

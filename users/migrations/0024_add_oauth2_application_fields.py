@@ -1,54 +1,17 @@
-from django.db import migrations, models
+from django.db import migrations
 
 
 class Migration(migrations.Migration):
+    """
+    Application schema changes for django-oauth-toolkit 3.x are applied by
+    oauth2_provider migrations on the swappable users.Application model.
+
+    This migration exists as a dependency anchor for later users migrations.
+    """
 
     dependencies = [
+        ('oauth2_provider', '0020_cimd_application_fields'),
         ('users', '0019_allowedorigin'),
     ]
 
-    operations = [
-        migrations.AddField(
-            model_name='application',
-            name='hash_client_secret',
-            field=models.BooleanField(default=True),
-        ),
-        migrations.AddField(
-            model_name='application',
-            name='allowed_origins',
-            field=models.TextField(
-                blank=True,
-                default='',
-                help_text='Allowed origins list to enable CORS, space separated',
-            ),
-        ),
-        migrations.AddField(
-            model_name='application',
-            name='algorithm',
-            field=models.CharField(blank=True, default='', max_length=5),
-        ),
-        migrations.AddField(
-            model_name='application',
-            name='registration_source',
-            field=models.CharField(
-                choices=[
-                    ('manual', 'Manual'),
-                    ('dcr', 'Dynamic Client Registration'),
-                    ('cimd', 'Client ID Metadata Document'),
-                ],
-                default='manual',
-                help_text='How this application was registered (manual, DCR per RFC 7591, or CIMD)',
-                max_length=32,
-            ),
-        ),
-        migrations.AddField(
-            model_name='application',
-            name='cimd_expires_at',
-            field=models.DateTimeField(
-                blank=True,
-                default=None,
-                help_text='When the cached Client ID Metadata Document should be re-fetched',
-                null=True,
-            ),
-        ),
-    ]
+    operations = []
