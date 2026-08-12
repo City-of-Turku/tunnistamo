@@ -62,10 +62,15 @@ class InterruptedSocialAuthMiddleware:
         if not isinstance(exception, SocialAuthBaseException):
             return
 
-        logger.info(str(exception), exc_info=exception)
-
         backend = getattr(request, 'backend', None)
         backend_name = getattr(backend, 'name', 'unknown-backend')
+
+        logger.warning(
+            'Social authentication failed for backend %s: %s',
+            backend_name,
+            exception,
+            exc_info=exception,
+        )
 
         url = self.get_redirect_uri(request, exception)
         message = self.get_message(request, exception)

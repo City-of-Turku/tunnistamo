@@ -105,11 +105,10 @@ class TurkuADFS(SAMLAuth):
         else:
             idp_config = enabled_idps[idp_name]
 
+        # Only pin the required OID claim. Optional profile fields use
+        # SAMLIdentityProvider fallbacks so missing CommonName/name claims
+        # do not fail authentication.
         idp_config['attr_user_permanent_id'] = 'http://schemas.microsoft.com/ws/2013/11/alternateloginid'
-        idp_config['attr_email'] = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'
-        idp_config['attr_full_name'] = 'http://schemas.xmlsoap.org/claims/CommonName'
-        idp_config['attr_first_name'] = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'
-        idp_config['attr_last_name'] = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'
 
         return SAMLIdentityProvider(self, idp_name, **idp_config)
 
@@ -128,7 +127,7 @@ class TurkuADFS(SAMLAuth):
         if isinstance(uid, list):
             uid = uid[0]
         if not uid or not isinstance(uid, str):
-            logger.warn('Account has no OID field: %s\n' % attrs)
+            logger.warning('Account has no OID field: %s\n' % attrs)
             raise NoAssociatedOID()
         return uid
 
