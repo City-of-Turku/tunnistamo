@@ -1,7 +1,5 @@
 import logging
 
-import coreapi
-import coreschema
 from django.contrib.auth import logout as django_user_logout
 from django.contrib.auth.mixins import UserPassesTestMixin
 from oauth2_provider.models import get_application_model
@@ -9,7 +7,6 @@ from oauth2_provider.views import AuthorizationView
 from oidc_provider.models import UserConsent
 from rest_framework import filters, mixins, serializers, viewsets
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.schemas import AutoSchema
 
 from scopes.api import ScopeDataBuilder
 from tunnistamo.api_common import OidcTokenAuthentication, ScopePermission
@@ -69,21 +66,6 @@ class UserConsentSerializer(serializers.ModelSerializer):
             return scopes
 
 
-class UserConsentViewSchema(AutoSchema):
-    def get_filter_fields(self, path, method):
-        fields = super().get_filter_fields(path, method)
-
-        if self.view.action in ('list', 'retrieve'):
-            schema = coreschema.String(
-                title='Include',
-                description='A comma-separated list of fields for which the full data of the related resource(s) should'
-                            ' be included nested in the response. Currently supports only "scope".'
-            )
-            fields.append(coreapi.Field(name='include', required=False, location='query', schema=schema))
-
-        return fields
-
-
 class UserConsentViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.DestroyModelMixin,
                          viewsets.GenericViewSet):
     """
@@ -104,7 +86,6 @@ class UserConsentViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixin
     authentication_classes = (OidcTokenAuthentication,)
     permission_classes = (IsAuthenticated, ScopePermission)
     required_scopes = ('consents',)
-    schema = UserConsentViewSchema()
 
     def get_queryset(self):
         if not self.request:

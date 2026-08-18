@@ -2,10 +2,9 @@ import uuid
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password, make_password
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils.timezone import now
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 User = get_user_model()
 
@@ -16,8 +15,8 @@ class UserDevice(models.Model):
 
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     user = models.ForeignKey(User, verbose_name=_('user'), on_delete=models.CASCADE)
-    public_key = JSONField(verbose_name=_('public key'))
-    secret_key = JSONField(verbose_name=_('secret key'))
+    public_key = models.JSONField(verbose_name=_('public key'))
+    secret_key = models.JSONField(verbose_name=_('secret key'))
     app_version = models.CharField(max_length=50, verbose_name=_('app version'))
     os = models.CharField(max_length=20, verbose_name=_('OS'), choices=((OS_ANDROID, 'Android'), (OS_IOS, 'iOS')))
     os_version = models.CharField(max_length=50, verbose_name=_('OS version'))

@@ -30,12 +30,13 @@ class CustomDatabaseWhitelistCorsMiddleware(CorsMiddleware):
             super().origin_found_in_white_lists(origin, url) or
             validate_allowed_origin(origin))
 
-    def process_response(self, request, response):
+    def add_response_headers(self, request, response):
         """
-        Remove all CORS headers from previous middleware
-        and views before applying own logic
+        Remove CORS headers set by views (e.g. oidc_provider) before applying
+        whitelist logic. django-cors-headers 4.x uses add_response_headers
+        instead of process_response.
         """
         for header in CORS_HEADERS:
             if header in response:
                 del response[header]
-        return super().process_response(request, response)
+        return super().add_response_headers(request, response)

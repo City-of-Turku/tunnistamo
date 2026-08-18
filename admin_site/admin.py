@@ -6,6 +6,7 @@ from django.contrib.admin.models import LogEntry
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.http import HttpResponseForbidden
+from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 
 
@@ -21,7 +22,7 @@ class TunnistamoAdminSite(admin.AdminSite):
 
         return update_wrapper(inner, outer)
 
-    @never_cache
+    @method_decorator(never_cache)
     def login(self, request, extra_context=None):
         if request.method == 'POST':
             username = request.POST.get('username')

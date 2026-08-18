@@ -79,7 +79,9 @@ SITE_URL='localhost:8000'
 USE_X_FORWARDED_HOST = env('USE_X_FORWARDED_HOST')
 USE_X_FORWARDED_PORT = env('USE_X_FORWARDED_PORT')
 
-TEMPLATE_DEBUG = False
+TEMPLATE_DEBUG = False  # noqa: deprecated, kept for compatibility
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
@@ -121,7 +123,7 @@ INSTALLED_APPS = (
     'crequest',
     'django_filters',
 
-    'helusers',
+    'helusers.apps.HelusersConfig',
     'content',
 
     'yletunnus',
@@ -283,7 +285,8 @@ SVG_DIRS = [
 ]
 
 COMPRESS_PRECOMPILERS = (
-    ('text/x-scss', '%s/.bin/node-sass --importer=%s/node-sass-tilde-importer {infile} {outfile}' % (NODE_MODULES_PATH, NODE_MODULES_PATH)),  # noqa
+    ('text/x-scss', 'sass --quiet-deps --silence-deprecation=import --load-path=%s --load-path=%s {infile} {outfile}' % (
+        NODE_MODULES_PATH, BASE_DIR)),
 )
 
 # Bootstrap is included through our main style file
@@ -301,6 +304,10 @@ NPM_FILE_PATTERNS = {
 
 
 SITE_ID = 1
+
+SOCIAL_AUTH_JSONFIELD_ENABLED = True
+SOCIAL_AUTH_PROTECTED_USER_FIELDS = ['ad_groups', 'username', 'id', 'pk', 'password',
+                                     'is_active', 'is_staff', 'is_superuser']
 
 PARLER_LANGUAGES = {SITE_ID: [{'code': code} for (code, name) in LANGUAGES]}
 
@@ -355,7 +362,7 @@ LOGGING = {
     }
 }
 
-CORS_ORIGIN_ALLOW_ALL = False
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_URLS_REGEX = r'.*/(\.well-known/openid-configuration|v1|openid|api-tokens|jwt-token).*'
 
 
@@ -666,7 +673,7 @@ if not SOCIAL_AUTH_SUOMIFI_ENABLED_IDPS:
             'attr_first_name': 'http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName',
             'attr_last_name': 'urn:oid:2.5.4.4',
             'attr_username': 'urn:oid:1.2.246.21',
-            'attr_email': 'urn:oid:0.9.2342.19200300.100.1.3',
+            'attr_email': None,
         }
     }
 

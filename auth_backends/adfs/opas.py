@@ -7,10 +7,9 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from django.core.cache import cache
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
 from social_core.backends.saml import SAMLAuth, SAMLIdentityProvider
-from social_core.exceptions import AuthMissingParameter
 
 from tunnistamo.exceptions import AuthBackendUnavailable, FriendlySocialAuthException
 
@@ -26,6 +25,7 @@ class OpasADFS(SAMLAuth):
     name = 'opas_adfs'
     metadata_url = 'https://login.microsoftonline.com/e59f7c03-5759-46b0-af27-7adce0770181/federationmetadata/2007-06/federationmetadata.xml?appid=70a6ef81-2c4d-4bc5-9f1e-7fd33f572630'
     EXTRA_DATA = ['school_role']
+    ROLE_CLAIM = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
 
     def generate_saml_config(self, idp=None):
         ret = super().generate_saml_config(idp)
@@ -98,19 +98,12 @@ class OpasADFS(SAMLAuth):
         else:
             idp_config = enabled_idps[idp_name]
 
+        # Only pin required claims. Optional profile fields use SAMLIdentityProvider
+        # fallbacks so missing CommonName/role claims do not fail authentication.
         idp_config['attr_user_permanent_id'] = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'
         idp_config['attr_email'] = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'
-        idp_config['attr_full_name'] = 'http://schemas.xmlsoap.org/claims/CommonName'
-        idp_config['attr_first_name'] = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'
-        idp_config['attr_last_name'] = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'
-        idp_config['attr_role'] = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
 
-        return SAMLIdentityProvider(idp_name, **idp_config)
-
-    def auth_complete(self, *args, **kwargs):
-        if 'RelayState' not in self.strategy.request_data():
-            raise AuthMissingParameter(self, 'RelayState')
-        return super().auth_complete(*args, **kwargs)
+        return SAMLIdentityProvider(self, idp_name, **idp_config)
 
     def get_allowed_idp_name(self, request):
         return self.name
@@ -127,7 +120,7 @@ class OpasADFS(SAMLAuth):
         if isinstance(uid, list):
             uid = uid[0]
         if not uid or not isinstance(uid, str):
-            logger.warn('Account has no OID field: %s\n' % attrs)
+            logger.warning('Account has no OID field: %s\n' % attrs)
             raise NoAssociatedOID()
         return uid
 
@@ -139,9 +132,10 @@ class OpasADFS(SAMLAuth):
         # and add the 'role' among them
 
         user_details = super().get_user_details(response)
-        idp = self.get_idp()
 
-        role = idp.get_attr(response['attributes'], 'attr_role', 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role')
+        role = response['attributes'].get(self.ROLE_CLAIM)
+        if isinstance(role, list):
+            role = role[0] if role else None
         if role:
             user_details['school_role'] = role
 

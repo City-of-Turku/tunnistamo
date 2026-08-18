@@ -1,4 +1,5 @@
 import factory
+from faker import Faker
 
 from users.factories import OIDCClientFactory
 
@@ -30,8 +31,17 @@ class ApiScopeFactory(factory.django.DjangoModelFactory):
     api = factory.SubFactory(ApiFactory)
     specifier = ''
     identifier = factory.LazyAttribute(ApiScope._generate_identifier)
-    name = factory.Faker('word')
-    description = factory.Faker('sentence')
 
     class Meta:
         model = ApiScope
+
+    @factory.post_generation
+    def with_translations(self, create, extracted, **kwargs):
+        if not create:
+            return
+        fake = Faker()
+        for language_code in ('fi', 'en'):
+            self.set_current_language(language_code)
+            self.name = fake.word()
+            self.description = fake.sentence()
+        self.save()

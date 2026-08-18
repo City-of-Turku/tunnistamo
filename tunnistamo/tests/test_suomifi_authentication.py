@@ -22,8 +22,8 @@ CLIENT_NAME = 'Test Client'
 CLIENT_ID = 'test_client'
 REDIRECT_URI = 'https://tunnistamo.test/redirect_uri'
 ID_TOKEN = {'aud': 'test_client'}
-ID_TOKEN_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJ0ZXN0X2NsaWVudCJ9'
-ID_TOKEN_JWT_INVALID = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJJTlZBTElEIn0'
+ID_TOKEN_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJ0ZXN0X2NsaWVudCJ9.e30'
+ID_TOKEN_JWT_INVALID = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJJTlZBTElEIn0.e30'
 RELAY_STATE = 'SUOMIFI_RELAY_STATE'
 
 TEST_USER = 'testuser'
@@ -33,7 +33,7 @@ TEST_PASSWORD = 'testpassword'
 @pytest.fixture
 def django_client(request):
     from django.test.client import Client
-    return Client(SERVER_NAME=SERVER_NAME)
+    return Client(HTTP_HOST=SERVER_NAME)
 
 
 @pytest.fixture
@@ -116,12 +116,13 @@ def create_noncompliant_test_provider():
         client_id=CLIENT_ID,
         client_type=Application.CLIENT_CONFIDENTIAL,
         authorization_grant_type=Application.GRANT_AUTHORIZATION_CODE,
-        name=CLIENT_NAME
+        name=CLIENT_NAME,
+        redirect_uris=REDIRECT_URI,
+        hash_client_secret=False,
     )
-    test_provider.redirect_uris = REDIRECT_URI
-    login_method = LoginMethod.objects.create(
+    login_method, _ = LoginMethod.objects.get_or_create(
         provider_id='suomifi',
-        name='suomi.fi.test'
+        defaults={'name': 'suomi.fi.test'}
     )
     test_provider.login_methods.add(login_method)
     test_provider.save()
@@ -142,7 +143,7 @@ def load_file(filename):
 @freeze_time('2019-01-01 12:00:00', tz_offset=2)
 def test_suomifi_metadata(django_client):
     create_oidc_client()
-    metadata_url = reverse('auth_backends:suomifi_metadata')
+    metadata_url = reverse('auth_backends:saml_metadata', kwargs={'backend': 'suomifi'})
     metadata_response = django_client.get(metadata_url)
     expected_metadata = load_file('suomifi_metadata.xml')
     assert metadata_response.status_code == 200
@@ -226,7 +227,7 @@ def test_suomifi_login_interrupt(django_client):
     assert callback_response.status_code == 302
     callback_redirect = urlparse(callback_response.url)
     callback_parameters = parse_qs(callback_redirect.query)
-    assert callback_redirect.path == '/login/'
+    assert callback_redirect.path == '/accounts/login/'
     assert callback_parameters['next'][0] == REDIRECT_URI
 
 
@@ -237,7 +238,6 @@ def test_suomifi_login_noncompliant_provider(django_client):
         'client_id': CLIENT_ID,
         'redirect_uri': REDIRECT_URI,
         'response_type': 'code',
-        'scope': 'read',
     }
     auth_page_url = reverse('oauth2_authorize') + '?{}'.format(urlencode(args))
     auth_page_response = django_client.get(auth_page_url, follow=True)
@@ -259,6 +259,9 @@ def test_suomifi_logout_sp_request(django_client, django_user_model, fixed_saml_
     create_social_user(user)
     create_oidc_token(user, oidc_client)
     django_client.login(username=TEST_USER, password=TEST_PASSWORD)
+    session = django_client.session
+    session['social_auth_last_login_backend'] = 'suomifi'
+    session.save()
     args = {
         'id_token_hint': ID_TOKEN_JWT,
         'post_logout_redirect_uri': REDIRECT_URI,
@@ -287,6 +290,9 @@ def test_suomifi_logout_sp_request_no_social_user(django_client, django_user_mod
     create_oidc_client()
     create_user(django_user_model)
     django_client.login(username=TEST_USER, password=TEST_PASSWORD)
+    session = django_client.session
+    session['social_auth_last_login_backend'] = 'suomifi'
+    session.save()
     args = {
         'id_token_hint': ID_TOKEN_JWT,
         'post_logout_redirect_uri': REDIRECT_URI,
@@ -297,7 +303,7 @@ def test_suomifi_logout_sp_request_no_social_user(django_client, django_user_mod
     # If social user does not exist only Django logout is performed
     assert not django_client.cookies.get('sso-sessionid').value
     assert logout_page_response.status_code == 302
-    assert logout_page_response.url == REDIRECT_URI
+    assert logout_page_response['Location'] == REDIRECT_URI
 
 
 @pytest.mark.django_db
@@ -308,6 +314,9 @@ def test_suomifi_logout_sp_request_invalid_token(django_client, django_user_mode
     create_social_user(user)
     create_oidc_token(user, oidc_client)
     django_client.login(username=TEST_USER, password=TEST_PASSWORD)
+    session = django_client.session
+    session['social_auth_last_login_backend'] = 'suomifi'
+    session.save()
     args = {
         'id_token_hint': ID_TOKEN_JWT_INVALID,
         'post_logout_redirect_uri': REDIRECT_URI,
@@ -319,7 +328,7 @@ def test_suomifi_logout_sp_request_invalid_token(django_client, django_user_mode
     # still perform logout as we are able to deduce enough information to log
     # the client out. We are unable to remove the ID token and we do not have
     # a way to deduce the final redirect after Suomi.fi callback so the
-    # RelayState parameter will be missing from the SAML request.
+    # RelayState parameter contains the end-session URL instead of a client token.
     assert Token.objects.count() == 1
     assert logout_page_response.status_code == 302
     suomifi_redirect = urlparse(logout_page_response.url)
@@ -330,7 +339,7 @@ def test_suomifi_logout_sp_request_invalid_token(django_client, django_user_mode
     expected_logout_signature = load_file('suomifi_logout_without_relaystate_signature.b64').decode()
     assert suomifi_redirect[:3] == expected_slo_url[:3]
     assert suomifi_saml_request == expected_logout_request
-    assert 'RelayState' not in suomifi_query_params
+    assert suomifi_query_params['RelayState'][0] == 'http://tunnistamo.test/openid/end-session'
     assert suomifi_query_params['Signature'][0] == expected_logout_signature
 
 
@@ -345,7 +354,7 @@ def test_suomifi_logout_sp_response(django_client):
         'SigAlg': 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256',
         'Signature': load_file('suomifi_logout_response_signature.b64').decode()
     }
-    callback_url = reverse('auth_backends:suomifi_logout_callback') + '?{}'.format(urlencode(args))
+    callback_url = reverse('auth_backends:logout_callback', kwargs={'backend': 'suomifi'}) + '?{}'.format(urlencode(args))
     callback_response = django_client.get(callback_url)
 
     # After handling the logout response the user is redirected to REDIRECT_URI
@@ -363,7 +372,7 @@ def test_suomifi_logout_sp_response_invalid_relaystate(django_client):
         'SigAlg': 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256',
         'Signature': load_file('suomifi_logout_response_with_invalid_relaystate_signature.b64').decode()
     }
-    callback_url = reverse('auth_backends:suomifi_logout_callback') + '?{}'.format(urlencode(args))
+    callback_url = reverse('auth_backends:logout_callback', kwargs={'backend': 'suomifi'}) + '?{}'.format(urlencode(args))
     callback_response = django_client.get(callback_url)
 
     # If RelayState in the logout response is invalid the user is redirected to LOGIN_URL
@@ -382,7 +391,7 @@ def test_suomifi_idp_logout(django_client, fixed_saml_id):
         'SigAlg': 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256',
         'Signature': load_file('suomifi_idp_logout_signature.b64').decode()
     }
-    callback_url = reverse('auth_backends:suomifi_logout_callback') + '?{}'.format(urlencode(args))
+    callback_url = reverse('auth_backends:logout_callback', kwargs={'backend': 'suomifi'}) + '?{}'.format(urlencode(args))
     callback_response = django_client.get(callback_url)
 
     # IdP initiated logout request results in redirect to Suomi.fi SLO URL with

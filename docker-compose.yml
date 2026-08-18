@@ -1,7 +1,6 @@
-version: '3.7'
 services:
     postgres:
-        image: postgres:9.6-alpine
+        image: postgres:15-alpine
         environment:
             POSTGRES_USER: tunnistamo
             POSTGRES_PASSWORD: tunnistamo
@@ -19,8 +18,10 @@ services:
         env_file:
             - docker-compose.env.yaml
         environment:
-            DATABASE_URL: postgres://tunnistamo:tunnistamo@tunnistamo-db/tunnistamo
-            DATABASE_HOST: tunnistamo-db.helsinki
+            DATABASE_URL: postgres://tunnistamo:tunnistamo@postgres/tunnistamo
+            DATABASE_HOST: postgres
+            SKIP_CERTIFICATES: "true"
+            NODE_MODULES_ROOT: /var/tunnistamo/node_modules
         volumes:
             - .:/app
             - django-media-volume:/var/media/
@@ -31,8 +32,8 @@ services:
         container_name: tunnistamo-backend
 
 volumes:
-        postgres-data-volume:
-        django-media-volume:
+    postgres-data-volume:
+    django-media-volume:
 
 networks:
     default:

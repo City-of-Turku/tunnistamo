@@ -44,6 +44,7 @@ class ApplicationFactory(factory.django.DjangoModelFactory):
     client_type = Application.CLIENT_CONFIDENTIAL
     authorization_grant_type = Application.GRANT_AUTHORIZATION_CODE
     skip_authorization = True
+    hash_client_secret = False
 
     class Meta:
         model = Application

@@ -3,10 +3,9 @@ from __future__ import unicode_literals
 import logging
 import uuid
 
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils.timezone import now
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from helusers.models import AbstractUser
 from ipware import get_client_ip
@@ -118,7 +117,7 @@ class UserLoginEntryManager(models.Manager):
         kwargs.setdefault('user', request.user)
 
         if 'ip_address' not in kwargs:
-            kwargs['ip_address'] = get_client_ip(request)[0]
+            kwargs['ip_address'] = get_client_ip(request)[0] or request.META.get('REMOTE_ADDR')
 
         if 'geo_location' not in kwargs:
             try:
@@ -138,7 +137,7 @@ class UserLoginEntry(models.Model):
     )
     timestamp = models.DateTimeField(verbose_name=_('timestamp'), db_index=True)
     ip_address = models.CharField(verbose_name=_('IP address'), max_length=50, null=True, blank=True)
-    geo_location = JSONField(verbose_name=_('geo location'), null=True, blank=True)
+    geo_location = models.JSONField(verbose_name=_('geo location'), null=True, blank=True)
 
     objects = UserLoginEntryManager()
 

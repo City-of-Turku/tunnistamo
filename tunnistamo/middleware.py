@@ -5,13 +5,13 @@ from datetime import timedelta
 from django.conf import settings
 from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.utils import timezone
-from django.utils.http import urlencode, is_safe_url
-from django.utils.translation import ugettext_lazy as _
+from django.utils.http import urlencode, url_has_allowed_host_and_scheme
+from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.contrib.messages.api import MessageFailure
-from ipware import utils as ipware_utils
+from ipware import get_client_ip
 from social_core.exceptions import SocialAuthBaseException
 from oidc_provider.lib.errors import BearerTokenError
 from django.contrib.auth import REDIRECT_FIELD_NAME
@@ -33,7 +33,7 @@ class InterruptedSocialAuthMiddleware:
         strategy = request.social_strategy
         redirect_uri = reverse('login')
         next_url = strategy.session.get('next')
-        if next_url and is_safe_url(
+        if next_url and url_has_allowed_host_and_scheme(
             url=next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
         ):
             redirect_uri += '?%s' % urlencode({REDIRECT_FIELD_NAME: next_url})
@@ -62,10 +62,15 @@ class InterruptedSocialAuthMiddleware:
         if not isinstance(exception, SocialAuthBaseException):
             return
 
-        logger.info(str(exception), exc_info=exception)
-
         backend = getattr(request, 'backend', None)
         backend_name = getattr(backend, 'name', 'unknown-backend')
+
+        logger.warning(
+            'Social authentication failed for backend %s: %s',
+            backend_name,
+            exception,
+            exc_info=exception,
+        )
 
         url = self.get_redirect_uri(request, exception)
         message = self.get_message(request, exception)
@@ -184,8 +189,9 @@ class RealClientIPMiddleware(object):
         else:
             from_trusted_proxy = False
 
-        if from_trusted_proxy:
-            ips, ip_count = ipware_utils.get_ips_from_string(forwarded_for)
-            request.META['REMOTE_ADDR'] = ips[0]
+        if from_trusted_proxy and forwarded_for:
+            client_ip, _ = get_client_ip(request)
+            if client_ip:
+                request.META['REMOTE_ADDR'] = str(client_ip)
 
         return self.get_response(request)

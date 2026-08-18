@@ -13,7 +13,7 @@ from django.views.generic import View
 from django.views.generic.base import TemplateView
 from django.views.decorators.cache import never_cache
 from django.views.decorators.clickjacking import xframe_options_exempt
-from jwkest.jws import JWT
+import jwt
 from oauth2_provider.models import get_application_model
 from oidc_provider.lib.endpoints.authorize import AuthorizeEndpoint
 from oidc_provider.lib.endpoints.token import TokenEndpoint
@@ -78,6 +78,8 @@ class LoginView(TemplateView):
             backend = load_backend(load_strategy(request), m.provider_id, redirect_uri=None)
             if hasattr(backend, 'get_allowed_idp_name'):
                 idp_name = backend.get_allowed_idp_name(request)
+                if not idp_name:
+                    continue
                 url_params['idp'] = idp_name
 
             if url_params:
@@ -294,17 +296,24 @@ class TunnistamoOidcEndSessionView(EndSessionView):
         backend_name = None
         user = request.user
         if user.is_authenticated:
-            backend_name = self.request.session.get('social_auth_last_login_backend', None)
+            backend_name = request.session.get('social_auth_last_login_backend', None)
+
+        post_logout_redirect_uri = (
+            request.GET.get('post_logout_redirect_uri')
+            or request.POST.get('post_logout_redirect_uri')
+        )
 
         # clear Django session and get redirect URL
         response = super().dispatch(request, *args, **kwargs)
 
         if backend_name is not None:
-            # If the backend supports logout, ask it to generate a logout
-            # response to pass to the browser.
-            backend_response = create_logout_response(request, user, backend_name, response.url)
-            if backend_response is not None:
-                response = backend_response
+            redirect_uri = getattr(response, 'url', None) or post_logout_redirect_uri
+            if redirect_uri:
+                backend_response = create_logout_response(
+                    request, user, backend_name, redirect_uri
+                )
+                if backend_response is not None:
+                    response = backend_response
 
         return response
 
@@ -321,7 +330,7 @@ class TunnistamoOidcTokenView(View):
 
             # Django OIDC Provider doesn't support refresh token expiration (#230).
             # We don't supply refresh tokens when using restricted authentication methods.
-            amr = JWT().unpack(dic['id_token']).payload().get('amr', '')
+            amr = jwt.decode(dic['id_token'], options={'verify_signature': False}).get('amr', '')
             for restricted_auth in settings.RESTRICTED_AUTHENTICATION_BACKENDS:
                 if amr == locate(restricted_auth).name:
                     dic.pop('refresh_token')
@@ -361,7 +370,7 @@ def show_profile(request):
 
 
 class RememberMeView(View):
-    @never_cache
+    @method_decorator(never_cache)
     def post(self, request, *args, **kwargs):
         remember_me = request.POST.get('remember_me', '')
         if not remember_me:

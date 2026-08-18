@@ -2,10 +2,35 @@
 
 ## Code upgrade steps
 
-- Run migrations
+- Run migrations (see **Django 4.2 migration notes** below if upgrading from pre-4.2)
 - Compile translations: `python manage.py compilemessages`
 - Collect static files: `python manage.py collectstatic --noinput`
 - Reload uWSGI
+
+### Django 4.2 migration notes
+
+Tunnistamo uses a custom `users.Application` model (`OAUTH2_PROVIDER_APPLICATION_MODEL`).
+Application table changes come from **`oauth2_provider` migrations**, not duplicate `users` migrations.
+
+On an existing database (e.g. test/production), run:
+
+```bash
+# post_logout_redirect_uris already exists on users_application from older users migrations
+python manage.py migrate oauth2_provider 0007_application_post_logout_redirect_uris --fake
+
+python manage.py migrate --noinput
+```
+
+If `migrate` fails on another already-existing Application column, fake that specific
+`oauth2_provider` migration and re-run `migrate`.
+
+`users.0026_add_oauth2_application_fields` adds django-oauth-toolkit 3.x columns on
+`users_application` (required because the swapped Application model is not always
+updated by `oauth2_provider` migrations). It skips columns that already exist,
+for example when an older pre-4.2 `users.0024` already added them locally.
+
+If you previously hit `InconsistentMigrationHistory` for `users.0020_populate_cors_allowed_origins`,
+deploy the fixed migration files first, then run the commands above.
 
 ## Installation
 

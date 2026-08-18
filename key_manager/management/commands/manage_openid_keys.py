@@ -1,6 +1,7 @@
 from datetime import timedelta
 
-from Cryptodome.PublicKey import RSA
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -63,8 +64,13 @@ class Command(BaseCommand):
         Create an RSA key with a given length.
         Basically the same as oidc_provider.creatersakey but with configurable key length.
         """
-        key = RSA.generate(length)
-        rsakey = RSAKey.objects.create(key=key.exportKey('PEM').decode('utf8'))
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=length)
+        pem = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        ).decode('utf8')
+        rsakey = RSAKey.objects.create(key=pem)
         ManagedRSAKey.objects.create(rsakey=rsakey, created_at=timezone.now())
         self.stdout.write('Created new key of length {0} with id: {1}'.format(length, rsakey))
 

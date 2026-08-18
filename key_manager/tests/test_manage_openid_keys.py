@@ -136,15 +136,13 @@ class TestManageOpenidKeys(object):
         for line_pattern in line_patterns:
             assert re.match(line_pattern[1], output[line_pattern[0]])
 
-    @patch('Cryptodome.PublicKey.RSA.generate')
+    @patch('key_manager.management.commands.manage_openid_keys.rsa.generate_private_key')
     def test_key_generation_failure(self, mock):
         # there are no keys at the beginning
         self.check_key_counts(0, 0)
 
         # when RSA key generation fails
-        def mock_generate(bits):
-            raise Exception('TEST')
-        mock.side_effect = mock_generate
+        mock.side_effect = Exception('TEST')
 
         # an exception rises
         with pytest.raises(Exception, match='TEST'):

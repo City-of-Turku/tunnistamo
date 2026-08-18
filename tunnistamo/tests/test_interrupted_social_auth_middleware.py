@@ -36,7 +36,7 @@ def test_interrupted_social_auth_middleware_redirect_preserves_next_param():
     assert response.status_code == 302
 
     parsed = urlparse(response["Location"])
-    assert parsed.path == "/login/"
+    assert parsed.path == "/accounts/login/"
 
     qs = parse_qs(parsed.query)
     assert qs.get("next") == [next_url]

@@ -9,7 +9,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.conf import settings
 from django.shortcuts import render
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from social_core.backends.legacy import LegacyAuth
 from social_core.exceptions import AuthMissingParameter
 from social_django.views import complete as complete_view

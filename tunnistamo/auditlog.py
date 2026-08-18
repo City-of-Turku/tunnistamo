@@ -51,7 +51,7 @@ def log_authorize(request):
 
     extra_context = {
         'oidc_client_id': client_id,
-        'oidc_client_name': client.name,
+        'oidc_client_name': client.name if client else None,
     }
     if request.method == 'GET':
         event_name = 'authorize'

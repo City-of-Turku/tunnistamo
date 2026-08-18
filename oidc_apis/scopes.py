@@ -1,6 +1,6 @@
 import re
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from oidc_provider.lib.claims import ScopeClaims, StandardScopeClaims
 from oidc_provider.lib.errors import BearerTokenError
 from social_django.models import UserSocialAuth
@@ -21,8 +21,8 @@ class ApiScopeClaims(ScopeClaims):
         return [
             {
                 'scope': api_scope.identifier,
-                'name': api_scope.name,
-                'description': api_scope.description,
+                'name': api_scope.safe_translation_getter('name', any_language=True),
+                'description': api_scope.safe_translation_getter('description', any_language=True),
             }
             for api_scope in api_scopes if api_scope
         ]

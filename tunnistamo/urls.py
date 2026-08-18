@@ -4,14 +4,12 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.admin.views.decorators import staff_member_required
+from django.http import HttpResponse
 from django.urls import include, path, re_path
-from django.utils import translation
 from django.views.decorators.csrf import csrf_exempt
 from django.views.defaults import permission_denied
 from oidc_provider.views import ProviderInfoView as OIDCProviderInfoView
-from rest_framework.documentation import include_docs_urls
 from rest_framework.routers import SimpleRouter
-from rest_framework.schemas import SchemaGenerator
 
 import auth_backends.urls
 from devices.api import UserDeviceViewSet
@@ -28,13 +26,6 @@ from users.views import (
 )
 
 from .api import GetJWTView, UserView
-
-
-class AllEnglishSchemaGenerator(SchemaGenerator):
-    def get_schema(self, *args, **kwargs):
-        with translation.override('en'):
-            return super().get_schema(*args, **kwargs)
-
 
 router = SimpleRouter()
 router.register('user_identity', UserIdentityViewSet)
@@ -70,8 +61,6 @@ urlpatterns = [
     path('login/', LoginView.as_view()),
     path('logout/', LogoutView.as_view()),
     v1_api_path,
-    path('docs/', include_docs_urls(title='Tunnistamo API v1', patterns=[v1_api_path],
-                                    generator_class=AllEnglishSchemaGenerator)),
 ]
 
 if settings.DEBUG:
