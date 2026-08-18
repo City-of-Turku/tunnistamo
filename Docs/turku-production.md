@@ -26,7 +26,8 @@ If `migrate` fails on another already-existing Application column, fake that spe
 
 `users.0026_add_oauth2_application_fields` adds django-oauth-toolkit 3.x columns on
 `users_application` (required because the swapped Application model is not always
-updated by `oauth2_provider` migrations).
+updated by `oauth2_provider` migrations). It skips columns that already exist,
+for example when an older pre-4.2 `users.0024` already added them locally.
 
 If you previously hit `InconsistentMigrationHistory` for `users.0020_populate_cors_allowed_origins`,
 deploy the fixed migration files first, then run the commands above.
