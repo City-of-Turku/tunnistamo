@@ -3,6 +3,7 @@ from urllib.parse import parse_qs, urlparse
 
 from django.conf import settings
 from django.contrib.auth import logout as auth_logout
+from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -324,9 +325,14 @@ class TunnistamoOidcTokenView(View):
         token = TokenEndpoint(request)
 
         try:
-            token.validate_params()
-
-            dic = token.create_response_dic()
+            # oidc-provider 0.9 locks the authorization code with
+            # select_for_update(), which Django only allows inside a
+            # transaction. The upstream TokenView opens one; this
+            # replacement view has to do the same or every code exchange
+            # fails with invalid_grant.
+            with transaction.atomic():
+                token.validate_params()
+                dic = token.create_response_dic()
 
             # Django OIDC Provider doesn't support refresh token expiration (#230).
             # We don't supply refresh tokens when using restricted authentication methods.
