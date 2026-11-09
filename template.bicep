@@ -70,7 +70,7 @@ param apiAppSettings object = {
   SOCIAL_AUTH_TURKU_SUOMIFI_API_KEY: socialAuthTurkuSuomiFiApiKey
   SOCIAL_AUTH_TURKU_ADFS_SP_ENTITY_ID: (isProduction) ? 'https://tunnistamo.turku.fi/' : 'https://testitunnistamo.turku.fi/'
   SOCIAL_AUTH_OPAS_ADFS_SP_ENTITY_ID: (isProduction) ? 'https://tunnistamo.turku.fi/' : 'https://testitunnistamo.turku.fi/'
-  KOHA_OAUTH_CLIENT_ID: '3ae0c930-62a2-43e4-a521-134601f60159'
+  KOHA_OAUTH_CLIENT_ID: '68575a74-b4ee-4725-a0d8-7fd4a1bcd404'
   KOHA_OAUTH_CLIENT_API_KEY: kohaOauthClientApiKey
   SOCIAL_AUTH_FOLI_API_ID: 'tunnistamo'
   SOCIAL_AUTH_FOLI_API_KEY: socialAuthFoliApiKey
